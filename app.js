@@ -2501,6 +2501,15 @@ function renderShopCatalog() {
       });
     });
 
+    // Abrir ficha detallada del producto al hacer clic en la tarjeta
+    card.style.cursor = 'pointer';
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('.wishlist-heart-btn') || e.target.closest('.try-3d-pill') || e.target.closest('.add-cart-btn')) {
+        return;
+      }
+      openProductModal(prod);
+    });
+
     grid.appendChild(card);
   });
 
@@ -2848,6 +2857,592 @@ function showToast(htmlMsg) {
 }
 
 // ============================================================================
+// 8.5. EVOLUCIÓN BENCHMARK MINIFAUNA: COMPONENTES, PACKS, MODALES Y GAMIFICACIÓN
+// ============================================================================
+
+// --- 1. NAVEGACIÓN ACTIVA & SCROLL-SPY ---
+function initNavScrollSpy() {
+  const sections = [
+    { id: 'explorador-3d', link: document.querySelector('.nav-links a[href="#explorador-3d"]') },
+    { id: 'catalogo-tienda', link: document.querySelector('.nav-links a[href="#catalogo-tienda"]') },
+    { id: 'packs-seccion', link: document.querySelector('.nav-links a[href="#packs-seccion"]') },
+    { id: 'regalos-seccion', link: document.querySelector('.nav-links a[href="#regalos-seccion"]') },
+    { id: 'profesionales-seccion', link: document.querySelector('.nav-links a[href="#profesionales-seccion"]') },
+    { id: 'universo-seccion', link: document.querySelector('.nav-links a[href="#universo-seccion"]') },
+    { id: 'preguntas-frecuentes', link: document.querySelector('.nav-links a[href="#preguntas-frecuentes"]') }
+  ];
+
+  if ('IntersectionObserver' in window) {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          const match = sections.find((s) => s.id === entry.target.id);
+          if (match && match.link) {
+            document.querySelectorAll('.nav-links a').forEach((a) => a.classList.remove('active'));
+            match.link.classList.add('active');
+          }
+        }
+      });
+    }, { rootMargin: '-20% 0px -65% 0px' });
+
+    sections.forEach((s) => {
+      const el = document.getElementById(s.id);
+      if (el) observer.observe(el);
+    });
+  }
+}
+
+// --- 2. MODO 2D ACCESIBLE EN EL EXPLORADOR ---
+function init2DFallbackMode() {
+  const toggleBtn = document.getElementById('btn-toggle-2d-mode');
+  const fallbackView = document.getElementById('fallback-2d-view');
+  const canvasContainer = document.getElementById('canvas-container');
+  const hotspotLayer = document.getElementById('hotspot-layer');
+  const gridContainer = document.getElementById('fallback-2d-grid');
+  if (!toggleBtn || !fallbackView || !gridContainer) return;
+
+  let is2DActive = false;
+
+  // Renderizar 6 tarjetas de biomas
+  gridContainer.innerHTML = '';
+  HABITATS.forEach((hab) => {
+    const card = document.createElement('div');
+    card.className = 'biome-card-2d';
+    const faunaSample = hab.defaultFigures.map((fId) => {
+      const f = CATALOG_FIGURES.find((cf) => cf.id === fId);
+      return f ? `${f.emoji} ${f.name.split(' ')[0]}` : '';
+    }).filter(Boolean).join(' · ');
+
+    card.innerHTML = `
+      <div class="biome-card-2d-top">
+        <span class="biome-card-2d-icon">${hab.icon}</span>
+        <span class="biome-card-2d-badge">${escapeHtml(hab.badge)}</span>
+      </div>
+      <h4 class="biome-card-2d-title">${escapeHtml(hab.name)}</h4>
+      <p class="biome-card-2d-note">${escapeHtml(hab.zooNote)}</p>
+      <div class="biome-card-2d-fauna">
+        <strong>Fauna nativa:</strong> ${faunaSample}
+      </div>
+      <button class="biome-card-2d-btn" data-hab-id="${hab.id}">
+        🏔️ Abrir Hábitat en Visor 3D
+      </button>
+    `;
+
+    card.querySelector('button').addEventListener('click', () => {
+      is2DActive = false;
+      fallbackView.style.display = 'none';
+      canvasContainer.style.display = 'block';
+      hotspotLayer.style.display = 'block';
+      toggleBtn.textContent = '📋 Modo 2D Accesible';
+      enterHabitatMode(hab);
+      showToast(`🌍 Cargando hábitat de <strong>${escapeHtml(hab.name)}</strong>...`);
+    });
+
+    gridContainer.appendChild(card);
+  });
+
+  toggleBtn.addEventListener('click', () => {
+    is2DActive = !is2DActive;
+    if (is2DActive) {
+      fallbackView.style.display = 'block';
+      canvasContainer.style.display = 'none';
+      hotspotLayer.style.display = 'none';
+      toggleBtn.textContent = '🌍 Volver a Visor 3D';
+      showToast('📋 Modo 2D Accesible activado: listado rápido de biomas.');
+    } else {
+      fallbackView.style.display = 'none';
+      canvasContainer.style.display = 'block';
+      hotspotLayer.style.display = 'block';
+      toggleBtn.textContent = '📋 Modo 2D Accesible';
+    }
+  });
+}
+
+// --- 3. MODAL DE FICHA DE PRODUCTO DETALLADA ---
+let currentModalProduct = null;
+let currentModalTab = 'desc';
+
+function openProductModal(prod) {
+  currentModalProduct = prod;
+  const modal = document.getElementById('modal-product-detail');
+  if (!modal) return;
+
+  document.getElementById('pdetail-biome-badge').textContent = prod.biome || 'MiniFauna 3D';
+  document.getElementById('pdetail-title').textContent = prod.name;
+  document.getElementById('pdetail-emoji').textContent = prod.emoji || '🌿';
+  document.getElementById('pdetail-rating-stars').textContent = `★★★★★ ${(prod.rating || 5.0).toFixed(1)}`;
+  document.getElementById('pdetail-price').textContent = `${(prod.price || 0).toFixed(2)}€`;
+  document.getElementById('pdetail-btn-price').textContent = `${(prod.price || 0).toFixed(2)}€`;
+
+  const hexStr = prod.color ? '#' + prod.color.toString(16).padStart(6, '0') : '#28968C';
+  const visualBox = document.getElementById('pdetail-visual-box');
+  if (visualBox) {
+    visualBox.style.background = `radial-gradient(circle at 50% 40%, ${hexStr}25 0%, ${hexStr}55 100%)`;
+    visualBox.style.borderColor = hexStr;
+  }
+
+  const wishBtn = document.getElementById('pdetail-wish-btn');
+  const isWished = wishlistIds.has(prod.id);
+  if (wishBtn) {
+    wishBtn.innerHTML = isWished ? '🌸 Guardado en Favoritos' : '🤍 Guardar en Favoritos';
+  }
+
+  setProductModalTab('desc');
+  modal.classList.add('open');
+}
+
+function setProductModalTab(tabKey) {
+  currentModalTab = tabKey;
+  const contentEl = document.getElementById('pdetail-tab-content');
+  if (!contentEl || !currentModalProduct) return;
+
+  document.querySelectorAll('.pdetail-tab-btn').forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.ptab === tabKey);
+  });
+
+  const p = currentModalProduct;
+  if (tabKey === 'desc') {
+    contentEl.innerHTML = `
+      <p style="margin-bottom:8px;">${escapeHtml(p.desc || 'Figura articulada coleccionable de la colección oficial MiniFauna.')}</p>
+      <div style="background:var(--mf-bg-page);border:1.5px solid var(--mf-border);border-radius:12px;padding:10px 12px;margin-top:6px;">
+        <strong style="color:var(--mf-vine-dark);font-size:0.8rem;">🌿 Ecosistema Natural & Bioma:</strong>
+        <p style="font-size:0.78rem;color:var(--mf-text-muted);margin-top:2px;">
+          Pertenece al hábitat <strong>${escapeHtml(p.biome)}</strong>. Diseñado a escala proporcional para interactuar armónicamente con los escenarios 360° y las piezas de vegetación modular.
+        </p>
+      </div>
+    `;
+  } else if (tabKey === 'specs') {
+    contentEl.innerHTML = `
+      <ul style="padding-left:18px;display:flex;flex-direction:column;gap:5px;font-size:0.79rem;color:var(--mf-text-main);">
+        <li><strong>Material Principal:</strong> Bio-PLA 100% de origen vegetal (almidón de maíz fermentado), biodegradable y sin derivados del petróleo.</li>
+        <li><strong>Tecnología:</strong> Impresión 3D multicapa de ultra-resolución (0.12mm) con articulaciones <em>print-in-place</em> integradas de una sola pieza.</li>
+        <li><strong>Dimensiones Estándar:</strong> 65 - 90 mm (longitud) × 40 - 55 mm (altura).</li>
+        <li><strong>Peso Estimado:</strong> 22 - 38 gramos según densidad de relleno interior (15% gyroid para máxima elasticidad).</li>
+        <li><strong>Tacto:</strong> Satinado mate sedoso tipo vinilo de juguete de diseñador (soft-touch).</li>
+      </ul>
+    `;
+  } else if (tabKey === 'safety') {
+    contentEl.innerHTML = `
+      <div style="background:#ECFDF5;border:1.5px solid #A7F3D0;border-radius:12px;padding:10px 12px;margin-bottom:8px;">
+        <strong style="color:#065F46;font-size:0.82rem;">🧒 Recomendado para Mayores de 3 Años (+3)</strong>
+        <p style="font-size:0.76rem;color:#047857;margin-top:2px;">
+          Conforme con los estándares de la <strong>Directiva Europea de Seguridad de los Juguetes 2009/48/CE</strong> y con marcado CE.
+        </p>
+      </div>
+      <p style="font-size:0.78rem;color:var(--mf-text-muted);">
+        Libre de BPA, plastificantes tóxicos, metales pesados y ftalatos. Pigmentos orgánicos fusionados en masa que no desprenden pintura al frotar. Debido a las piezas de tamaño pequeño en elementos de vegetación modular, no debe suministrarse a menores de 36 meses.
+      </p>
+    `;
+  } else if (tabKey === 'shipping') {
+    contentEl.innerHTML = `
+      <ul style="padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:0.79rem;color:var(--mf-text-main);">
+        <li><strong>Plazo de Fabricación & Envío:</strong> 24 a 72 horas laborables desde nuestro taller en Valencia.</li>
+        <li><strong>Embalaje Ecológico:</strong> Caja kraft reciclada, viruta vegetal y cinta de papel adhesivo libre de plástico.</li>
+        <li><strong>Envíos Gratis:</strong> En compras superiores a 45€ o con el Pack Explorador (6+ figuras).</li>
+        <li><strong>Cuidados Básicos:</strong> Limpiar suavemente con paño húmedo y agua templada. No sumergir en agua hirviendo ni exponer a temperaturas superiores a 55°C (radiadores, salpicaderos).</li>
+        <li><strong>Garantía:</strong> 14 días naturales de desistimiento y 3 años de garantía legal europea de conformidad.</li>
+      </ul>
+    `;
+  }
+}
+
+// Botones del Modal de Producto
+const pdetailCloseBtn = document.getElementById('pdetail-close-btn');
+if (pdetailCloseBtn) {
+  pdetailCloseBtn.addEventListener('click', () => {
+    document.getElementById('modal-product-detail').classList.remove('open');
+  });
+}
+
+document.querySelectorAll('.pdetail-tab-btn').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    setProductModalTab(btn.dataset.ptab);
+  });
+});
+
+const pdetailWishBtn = document.getElementById('pdetail-wish-btn');
+if (pdetailWishBtn) {
+  pdetailWishBtn.addEventListener('click', () => {
+    if (!currentModalProduct) return;
+    const p = currentModalProduct;
+    if (wishlistIds.has(p.id)) {
+      wishlistIds.delete(p.id);
+      pdetailWishBtn.innerHTML = '🤍 Guardar en Favoritos';
+      showToast(`🤍 "${escapeHtml(p.name)}" eliminado de tus favoritos.`);
+    } else {
+      wishlistIds.add(p.id);
+      pdetailWishBtn.innerHTML = '🌸 Guardado en Favoritos';
+      showToast(`🌸 "${escapeHtml(p.name)}" guardado en tus favoritos.`);
+    }
+    document.getElementById('wishlist-count').textContent = wishlistIds.size;
+    renderShopCatalog();
+    renderWishlistDrawer();
+  });
+}
+
+const pdetailTry3dBtn = document.getElementById('pdetail-try3d-btn');
+if (pdetailTry3dBtn) {
+  pdetailTry3dBtn.addEventListener('click', () => {
+    if (!currentModalProduct) return;
+    const prod = currentModalProduct;
+    document.getElementById('modal-product-detail').classList.remove('open');
+    document.getElementById('explorador-3d').scrollIntoView({ behavior: 'smooth' });
+    const targetHab = HABITATS.find((h) => h.biomeFilter === prod.biome) || HABITATS[0];
+    if (currentMode !== 'HABITAT' || activeHabitat.id !== targetHab.id) {
+      enterHabitatMode(targetHab);
+    }
+    if (prod.refItem) {
+      addItemToHabitat(prod.refItem, prod.refType);
+      showToast(`✨ "${escapeHtml(prod.name)}" colocado en el visor 3D.`);
+    }
+  });
+}
+
+const pdetailAddCartBtn = document.getElementById('pdetail-addcart-btn');
+if (pdetailAddCartBtn) {
+  pdetailAddCartBtn.addEventListener('click', () => {
+    if (!currentModalProduct) return;
+    const p = currentModalProduct;
+    addToWooCart({
+      title: p.name,
+      emoji: p.emoji,
+      price: p.price,
+      wooId: p.wooId,
+      details: `Bioma: ${p.biome}`
+    });
+    document.getElementById('modal-product-detail').classList.remove('open');
+  });
+}
+
+// --- 4. CONSTRUCTOR DE PACKS INTERACTIVO EASY BUNDLE ---
+let bundleTargetCount = 6;
+let bundleSelections = {}; // figureId -> qty
+
+function initBundleBuilder() {
+  const grid = document.getElementById('bundle-items-grid');
+  if (!grid) return;
+
+  grid.innerHTML = '';
+  CATALOG_FIGURES.forEach((fig) => {
+    bundleSelections[fig.id] = 0;
+    const card = document.createElement('div');
+    card.className = 'bundle-item-card';
+    card.id = `bundle-card-${fig.id}`;
+
+    card.innerHTML = `
+      <div class="bundle-item-top">
+        <span style="font-size:26px;">${fig.emoji}</span>
+        <div style="overflow:hidden;">
+          <div class="bundle-item-title" title="${escapeHtml(fig.name)}">${escapeHtml(fig.name)}</div>
+          <div style="font-size:0.74rem;font-weight:900;color:var(--mf-lagoon);">${fig.price.toFixed(2)}€</div>
+        </div>
+      </div>
+      <div class="bundle-item-counter">
+        <button type="button" class="bundle-count-btn btn-minus" data-id="${fig.id}">−</button>
+        <span class="bundle-qty-val" id="b-qty-${fig.id}" style="font-size:0.86rem;font-weight:900;">0</span>
+        <button type="button" class="bundle-count-btn btn-plus" data-id="${fig.id}">＋</button>
+      </div>
+    `;
+
+    card.querySelector('.btn-minus').addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (bundleSelections[fig.id] > 0) {
+        bundleSelections[fig.id]--;
+        updateBundleUI();
+      }
+    });
+
+    card.querySelector('.btn-plus').addEventListener('click', (e) => {
+      e.stopPropagation();
+      bundleSelections[fig.id]++;
+      updateBundleUI();
+    });
+
+    grid.appendChild(card);
+  });
+
+  // Selector de chips de objetivo
+  document.querySelectorAll('.target-chip-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.target-chip-btn').forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      bundleTargetCount = parseInt(btn.dataset.target, 10) || 6;
+      updateBundleUI();
+    });
+  });
+
+  // Botones de las tarjetas de nivel
+  document.querySelectorAll('.pack-select-tier-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const target = parseInt(btn.dataset.setTarget, 10) || 6;
+      bundleTargetCount = target;
+      document.querySelectorAll('.target-chip-btn').forEach((b) => {
+        b.classList.toggle('active', parseInt(b.dataset.target, 10) === target);
+      });
+      document.querySelector('.bundle-builder-wrap').scrollIntoView({ behavior: 'smooth' });
+      updateBundleUI();
+      showToast(`🎯 Pack de ${target} figuras seleccionado. ¡Añade tus favoritas en la lista inferior!`);
+    });
+  });
+
+  // Botón Añadir Pack a la Cesta
+  const addBundleBtn = document.getElementById('btn-add-bundle-cart');
+  if (addBundleBtn) {
+    addBundleBtn.addEventListener('click', () => {
+      const totalFigs = Object.values(bundleSelections).reduce((a, b) => a + b, 0);
+      if (totalFigs === 0) {
+        showToast('⚠️ Selecciona al menos una figura con los botones ＋ para componer tu pack.');
+        return;
+      }
+
+      const { subtotal, discountRate, discountAmount, shipping, total } = computeBundleTotals();
+      const chosenNames = Object.entries(bundleSelections)
+        .filter(([_, q]) => q > 0)
+        .map(([id, q]) => {
+          const f = CATALOG_FIGURES.find((cf) => cf.id === id);
+          return f ? `${q}x ${f.name}` : '';
+        })
+        .join(', ');
+
+      addToWooCart({
+        title: `Pack Ahorro Personalizado (${totalFigs} Figuras)`,
+        emoji: '📦',
+        price: total,
+        wooId: 9000 + bundleTargetCount,
+        details: `${chosenNames} · Dto: ${(discountRate * 100).toFixed(0)}% aplicado`
+      });
+
+      showToast(`🎉 ¡Pack de ${totalFigs} figuras añadido a tu cesta con ahorro de ${discountAmount.toFixed(2)}€!`);
+    });
+  }
+
+  updateBundleUI();
+}
+
+function computeBundleTotals() {
+  let count = 0;
+  let subtotal = 0;
+
+  CATALOG_FIGURES.forEach((fig) => {
+    const qty = bundleSelections[fig.id] || 0;
+    count += qty;
+    subtotal += qty * fig.price;
+  });
+
+  let discountRate = 0;
+  let isFreeShipping = false;
+
+  if (count >= 10) {
+    discountRate = 0.15;
+    isFreeShipping = true;
+  } else if (count >= 6) {
+    discountRate = 0.10;
+    isFreeShipping = true;
+  } else if (count >= 4) {
+    discountRate = 0.05;
+    isFreeShipping = subtotal >= 45;
+  } else {
+    discountRate = 0;
+    isFreeShipping = subtotal >= 45;
+  }
+
+  const discountAmount = subtotal * discountRate;
+  const shipping = (count > 0 && !isFreeShipping) ? 4.50 : 0.00;
+  const total = Math.max(0, subtotal - discountAmount + shipping);
+
+  return { count, subtotal, discountRate, discountAmount, shipping, isFreeShipping, total };
+}
+
+function updateBundleUI() {
+  const { count, subtotal, discountRate, discountAmount, shipping, isFreeShipping, total } = computeBundleTotals();
+
+  CATALOG_FIGURES.forEach((fig) => {
+    const q = bundleSelections[fig.id] || 0;
+    const qtyEl = document.getElementById(`b-qty-${fig.id}`);
+    if (qtyEl) qtyEl.textContent = q;
+    const cardEl = document.getElementById(`bundle-card-${fig.id}`);
+    if (cardEl) cardEl.classList.toggle('in-bundle', q > 0);
+  });
+
+  const progressText = document.getElementById('bundle-progress-text');
+  const progressFill = document.getElementById('bundle-progress-fill');
+  const discountBadge = document.getElementById('bundle-discount-badge');
+
+  if (progressText) {
+    progressText.textContent = `Llevas ${count} de ${bundleTargetCount} figuras seleccionadas`;
+  }
+
+  const pct = Math.min(100, Math.round((count / bundleTargetCount) * 100));
+  if (progressFill) {
+    progressFill.style.width = `${pct}%`;
+  }
+
+  if (discountBadge) {
+    if (count >= 10) {
+      discountBadge.textContent = '👑 ¡Nivel Máximo activado! -15% Dto. + Envío Gratis + Figura Secreta de Regalo';
+      discountBadge.style.background = '#FDE8F0';
+      discountBadge.style.color = '#9D174D';
+    } else if (count >= 6) {
+      discountBadge.textContent = '🧭 ¡Nivel Explorador activo! -10% Dto. + Envío Gratis Peninsular';
+      discountBadge.style.background = '#DCFCE7';
+      discountBadge.style.color = '#15803D';
+    } else if (count >= 4) {
+      discountBadge.textContent = '🌱 ¡Nivel Starter activo! -5% Dto. Suma 2 figuras más para Envío Gratis (-10%)';
+      discountBadge.style.background = '#FEF3C7';
+      discountBadge.style.color = '#92400E';
+    } else {
+      const missing = Math.max(1, 4 - count);
+      discountBadge.textContent = `Añade ${missing} figura${missing > 1 ? 's' : ''} más para activar tu primer 5% de descuento`;
+      discountBadge.style.background = '#F3F4F6';
+      discountBadge.style.color = '#4B5563';
+    }
+  }
+
+  const countLabel = document.getElementById('bundle-count-label');
+  const subtotalLabel = document.getElementById('bundle-subtotal-label');
+  const discountLabel = document.getElementById('bundle-discount-label');
+  const shippingLabel = document.getElementById('bundle-shipping-label');
+  const totalLabel = document.getElementById('bundle-total-label');
+
+  if (countLabel) countLabel.textContent = `${count} / ${bundleTargetCount}`;
+  if (subtotalLabel) subtotalLabel.textContent = `${subtotal.toFixed(2)}€`;
+  if (discountLabel) discountLabel.textContent = `-${discountAmount.toFixed(2)}€ (${(discountRate * 100).toFixed(0)}%)`;
+  if (shippingLabel) shippingLabel.textContent = isFreeShipping ? 'GRATIS' : `${shipping.toFixed(2)}€`;
+  if (totalLabel) totalLabel.textContent = `${total.toFixed(2)}€`;
+}
+
+// --- 5. REGALOS & EVENTOS MODAL Y FORMULARIO ---
+function initGiftQuoteModal() {
+  const modal = document.getElementById('modal-gift-quote');
+  const closeBtn = document.getElementById('gift-modal-close-btn');
+  const form = document.getElementById('form-gift-quote');
+  const select = document.getElementById('gift-occasion-select');
+
+  document.querySelectorAll('[data-open-gift-modal]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const occasion = btn.dataset.openGiftModal;
+      if (select && occasion) select.value = occasion;
+      modal.classList.add('open');
+    });
+  });
+
+  if (closeBtn && modal) {
+    closeBtn.addEventListener('click', () => modal.classList.remove('open'));
+  }
+
+  if (form && modal) {
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const email = document.getElementById('gift-email').value;
+      const occasionText = select.options[select.selectedIndex].text;
+      form.reset();
+      modal.classList.remove('open');
+      showToast(`🎁 ¡Solicitud recibida para <strong>${escapeHtml(occasionText)}</strong>! Te responderemos en ${escapeHtml(email)} en menos de 24h.`);
+    });
+  }
+}
+
+// --- 6. FORMULARIO INSTITUCIONAL PARA COLEGIOS ---
+function initSchoolQuoteForm() {
+  const form = document.getElementById('form-school-quote');
+  if (!form) return;
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const school = document.getElementById('school-name').value;
+    const email = document.getElementById('school-email').value;
+    form.reset();
+    showToast(`🎓 ¡Propuesta registrada para <strong>${escapeHtml(school)}</strong>! Recibirás el dossier con desglose oficial de IVA en ${escapeHtml(email)}.`);
+  });
+}
+
+// --- 7. UNIVERSO MINIFAUNA: PASAPORTE DEL EXPLORADOR & CLUB NEWSLETTER ---
+function initPassportAndClub() {
+  const passportModal = document.getElementById('modal-passport');
+  const openPassportBtn = document.getElementById('btn-open-passport');
+  const closePassportBtn = document.getElementById('passport-modal-close-btn');
+  const printPassportBtn = document.getElementById('btn-print-passport');
+  const container = document.getElementById('passport-checklist-container');
+  const summaryEl = document.getElementById('passport-progress-summary');
+
+  if (openPassportBtn && passportModal) {
+    openPassportBtn.addEventListener('click', () => {
+      renderPassportChecklist();
+      passportModal.classList.add('open');
+    });
+  }
+
+  if (closePassportBtn && passportModal) {
+    closePassportBtn.addEventListener('click', () => {
+      passportModal.classList.remove('open');
+    });
+  }
+
+  if (printPassportBtn) {
+    printPassportBtn.addEventListener('click', () => {
+      window.print();
+    });
+  }
+
+  function renderPassportChecklist() {
+    if (!container) return;
+    container.innerHTML = '';
+    const stored = JSON.parse(localStorage.getItem('minifauna_passport_checks') || '{}');
+    let totalItems = 0;
+    let checkedItems = 0;
+
+    HABITATS.forEach((hab) => {
+      const group = document.createElement('div');
+      group.className = 'passport-biome-group';
+      group.innerHTML = `<div class="passport-biome-title">${hab.icon} ${escapeHtml(hab.name)}</div>`;
+
+      const biomeFigs = CATALOG_FIGURES.filter((f) => f.biome === hab.biomeFilter);
+      biomeFigs.forEach((f) => {
+        totalItems++;
+        const isChecked = !!stored[f.id];
+        if (isChecked) checkedItems++;
+
+        const label = document.createElement('label');
+        label.className = 'passport-check-item';
+        label.innerHTML = `
+          <input type="checkbox" data-fig-id="${f.id}" ${isChecked ? 'checked' : ''} />
+          <span>${f.emoji} ${escapeHtml(f.name)}</span>
+        `;
+
+        label.querySelector('input').addEventListener('change', (e) => {
+          stored[f.id] = e.target.checked;
+          localStorage.setItem('minifauna_passport_checks', JSON.stringify(stored));
+          renderPassportChecklist();
+          showToast(e.target.checked
+            ? `🧭 ¡"${escapeHtml(f.name)}" registrado en tu Pasaporte!`
+            : `Desmarcado "${escapeHtml(f.name)}"`);
+        });
+
+        group.appendChild(label);
+      });
+
+      container.appendChild(group);
+    });
+
+    const pct = totalItems > 0 ? Math.round((checkedItems / totalItems) * 100) : 0;
+    if (summaryEl) {
+      summaryEl.textContent = `Progreso: ${checkedItems} de ${totalItems} especies descubiertas (${pct}%)`;
+    }
+  }
+
+  const clubForm = document.getElementById('form-club-subscribe');
+  if (clubForm) {
+    clubForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const email = document.getElementById('club-email').value;
+      localStorage.setItem('minifauna_club_member', email);
+      clubForm.reset();
+      showToast(`💌 ¡Bienvenido al Club MiniFauna! Tu código de 10% es: <strong>EXPLORADOR10</strong> (enviado a ${escapeHtml(email)})`);
+    });
+  }
+}
+
+// ============================================================================
 // 9. BUCLE DE RENDERIZADO 3D (60 FPS)
 // ============================================================================
 let lastAnimTime = performance.now();
@@ -2965,6 +3560,12 @@ window.addEventListener('resize', () => {
 renderMiniCatalog();
 renderShopCatalog();
 renderCartDrawer();
+initNavScrollSpy();
+init2DFallbackMode();
+initBundleBuilder();
+initGiftQuoteModal();
+initSchoolQuoteForm();
+initPassportAndClub();
 
 // ============================================================================
 // 8. CARRUSELES DE VÍDEO TOON EN CABECERA HERO (GESTIÓN EFICIENTE & REPRODUCCIÓN NATURAL)
