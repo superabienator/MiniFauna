@@ -435,6 +435,177 @@ function toyMaterial(hexColor, roughness = 0.7) {
 }
 
 // ============================================================================
+// 2.7 CIELO VOLUMÉTRICO CON PARALAJE PROFUNDO Y "NUBES DE ALGODÓN"
+// ============================================================================
+const skyRootGroup = new THREE.Group();
+skyRootGroup.name = 'skyRootGroup';
+skyRootGroup.raycast = () => {};
+scene.add(skyRootGroup);
+
+// Generador procedural de gradiente atmosférico (0 KB de descargas externas)
+function createAtmosphereGradientTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 16;
+  canvas.height = 256;
+  const ctx = canvas.getContext('2d');
+  const grad = ctx.createLinearGradient(0, 0, 0, 256);
+  grad.addColorStop(0.0, '#7DD3FC'); // Cenit azul celeste brillante
+  grad.addColorStop(0.38, '#BAE6FD'); // Atmósfera media difusa
+  grad.addColorStop(0.68, '#E0F2FE'); // Resplandor de horizonte suave
+  grad.addColorStop(0.88, '#FEF9C3'); // Luz dorada matinal
+  grad.addColorStop(1.0, '#FDE8F0'); // Destello cálido inferior
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 16, 256);
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.wrapS = THREE.ClampToEdgeWrapping;
+  tex.wrapT = THREE.ClampToEdgeWrapping;
+  return tex;
+}
+
+// Bóveda celeste profunda a radio 140 (proporciona perspectiva angular infinita con paralaje)
+const skyDomeMaterial = new THREE.MeshBasicMaterial({
+  map: createAtmosphereGradientTexture(),
+  side: THREE.BackSide,
+  depthWrite: false,
+  transparent: true,
+  opacity: 0.85
+});
+const skyDomeMesh = new THREE.Mesh(new THREE.SphereGeometry(140, 24, 16), skyDomeMaterial);
+skyDomeMesh.raycast = () => {};
+skyRootGroup.add(skyDomeMesh);
+
+// "Nubes de Algodón" (Toy-like Cotton Clouds) en 1 ÚNICO Draw Call mediante InstancedMesh
+const CLOUD_PUFF_OFFSETS = [
+  { pos: new THREE.Vector3(0, 0, 0), scale: new THREE.Vector3(1.4, 1.1, 1.25) },
+  { pos: new THREE.Vector3(-0.95, -0.15, 0.1), scale: new THREE.Vector3(0.95, 0.85, 0.9) },
+  { pos: new THREE.Vector3(0.95, -0.12, -0.05), scale: new THREE.Vector3(1.0, 0.9, 0.95) },
+  { pos: new THREE.Vector3(0.12, 0.52, 0.05), scale: new THREE.Vector3(0.9, 0.85, 0.85) },
+  { pos: new THREE.Vector3(-0.25, -0.2, 0.45), scale: new THREE.Vector3(0.75, 0.65, 0.7) }
+];
+
+// Distribución espacial en 4 anillos envolventes sin obstruir la vista frontal del globo
+const CLOUD_CLUSTERS = [
+  // Halo superior (Ártico / Cumbres altas)
+  { x: 5.8, y: 5.2, z: -2.8, s: 0.95, rotY: 0.2 },
+  { x: -6.2, y: 5.5, z: -2.2, s: 1.05, rotY: -0.3 },
+  { x: 0.5, y: 7.2, z: -4.0, s: 1.15, rotY: 0.1 },
+  { x: -3.2, y: 6.8, z: 3.2, s: 0.85, rotY: -0.4 },
+
+  // Halo inferior (Polo Sur / Mares lejanos)
+  { x: 5.5, y: -5.0, z: -2.5, s: 0.9, rotY: 0.4 },
+  { x: -5.8, y: -5.2, z: -2.0, s: 1.0, rotY: -0.2 },
+  { x: 1.0, y: -7.0, z: -3.8, s: 1.1, rotY: 0.15 },
+  { x: -2.5, y: -6.5, z: 3.0, s: 0.8, rotY: -0.3 },
+
+  // Fondo Profundo (Horizonte lejano tras el globo)
+  { x: 7.5, y: 2.0, z: -8.0, s: 1.35, rotY: 0.25 },
+  { x: -8.0, y: 1.2, z: -8.5, s: 1.4, rotY: -0.2 },
+  { x: 0.0, y: 3.5, z: -10.5, s: 1.5, rotY: 0.05 },
+  { x: 2.2, y: -2.8, z: -9.5, s: 1.25, rotY: 0.3 },
+
+  // Flancos laterales en órbita lejana
+  { x: 8.8, y: -0.5, z: 1.5, s: 0.95, rotY: -0.1 },
+  { x: -9.2, y: 0.8, z: 1.2, s: 0.95, rotY: 0.15 }
+];
+
+const totalPuffsCount = CLOUD_CLUSTERS.length * CLOUD_PUFF_OFFSETS.length;
+const puffGeo = new THREE.SphereGeometry(1, 14, 10);
+puffGeo.computeVertexNormals();
+
+const cloudMaterial = new THREE.MeshStandardMaterial({
+  color: 0xFFFFFF,
+  roughness: 0.85,
+  metalness: 0.02,
+  emissive: 0xFFF9EE, // Resplandor cálido interno para evitar sombras grises opacas
+  emissiveIntensity: 0.22,
+  transparent: true,
+  opacity: 0.94,
+  depthWrite: false
+});
+
+const cloudsInstancedMesh = new THREE.InstancedMesh(puffGeo, cloudMaterial, totalPuffsCount);
+cloudsInstancedMesh.castShadow = false;
+cloudsInstancedMesh.receiveShadow = false;
+cloudsInstancedMesh.raycast = () => {};
+
+const dummyMat = new THREE.Matrix4();
+const clusterPos = new THREE.Vector3();
+const clusterRot = new THREE.Euler();
+const clusterQuat = new THREE.Quaternion();
+const puffWorldPos = new THREE.Vector3();
+const puffWorldScale = new THREE.Vector3();
+
+let instIdx = 0;
+CLOUD_CLUSTERS.forEach((c) => {
+  clusterPos.set(c.x, c.y, c.z);
+  clusterRot.set(0, c.rotY, 0);
+  clusterQuat.setFromEuler(clusterRot);
+
+  CLOUD_PUFF_OFFSETS.forEach((p) => {
+    const offsetScaled = p.pos.clone().multiplyScalar(c.s).applyQuaternion(clusterQuat);
+    puffWorldPos.copy(clusterPos).add(offsetScaled);
+    puffWorldScale.copy(p.scale).multiplyScalar(c.s);
+
+    dummyMat.compose(puffWorldPos, clusterQuat, puffWorldScale);
+    cloudsInstancedMesh.setMatrixAt(instIdx++, dummyMat);
+  });
+});
+cloudsInstancedMesh.instanceMatrix.needsUpdate = true;
+
+const cloudsGroup = new THREE.Group();
+cloudsGroup.name = 'cloudsGroup';
+cloudsGroup.raycast = () => {};
+cloudsGroup.add(cloudsInstancedMesh);
+skyRootGroup.add(cloudsGroup);
+
+// Motas de polen botánico / partículas ambientales etéreas
+const motesCount = 65;
+const motesGeo = new THREE.BufferGeometry();
+const motesPos = new Float32Array(motesCount * 3);
+const motesColors = new Float32Array(motesCount * 3);
+const moteColor1 = new THREE.Color(0xFDE68A); // Polen ámbar
+const moteColor2 = new THREE.Color(0xBBF7D0); // Polen verde menta
+const moteColor3 = new THREE.Color(0xFFFFFF); // Pelusa blanca
+
+for (let i = 0; i < motesCount; i++) {
+  const r = 6.5 + Math.random() * 9.5;
+  const theta = Math.random() * Math.PI * 2;
+  const phi = Math.acos(Math.random() * 2 - 1);
+
+  motesPos[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+  motesPos[i * 3 + 1] = r * Math.cos(phi);
+  motesPos[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta);
+
+  const c = Math.random() < 0.45 ? moteColor1 : (Math.random() < 0.75 ? moteColor2 : moteColor3);
+  motesColors[i * 3] = c.r;
+  motesColors[i * 3 + 1] = c.g;
+  motesColors[i * 3 + 2] = c.b;
+}
+
+motesGeo.setAttribute('position', new THREE.BufferAttribute(motesPos, 3));
+motesGeo.setAttribute('color', new THREE.BufferAttribute(motesColors, 3));
+
+const motesMat = new THREE.PointsMaterial({
+  size: 0.16,
+  vertexColors: true,
+  transparent: true,
+  opacity: 0.75,
+  depthWrite: false
+});
+const botanicalMotes = new THREE.Points(motesGeo, motesMat);
+botanicalMotes.raycast = () => {};
+skyRootGroup.add(botanicalMotes);
+
+const HABITAT_ATMOSPHERE_TINTS = {
+  savanna: 0xFFFBEB,
+  cretaceous: 0xFFF7ED,
+  amazon: 0xECFDF5,
+  sahara: 0xFEFCE8,
+  rockies: 0xF0F9FF,
+  arctic: 0xF8FAFC
+};
+
+// ============================================================================
 // 3. GLOBO TERRÁQUEO ART-TOY 3D (SOFT-TOUCH MATTE VINYL & ORGANIC BEVEL)
 // ============================================================================
 const globeGroup = new THREE.Group();
@@ -1982,6 +2153,16 @@ function enterHabitatMode(habitat) {
   });
 
   animateCameraTo(new THREE.Vector3(0, 4.3, 7.2), new THREE.Vector3(0, 0.8, 0), 650);
+
+  // Reencuadre suave del cielo volumétrico para acompañar al hábitat
+  if (cloudsGroup) {
+    cloudsGroup.position.set(0, 1.8, -4.5);
+    cloudsGroup.scale.set(0.68, 0.68, 0.68);
+  }
+  if (skyDomeMesh && HABITAT_ATMOSPHERE_TINTS[habitat.id]) {
+    skyDomeMesh.material.color.setHex(HABITAT_ATMOSPHERE_TINTS[habitat.id]);
+  }
+
   renderMiniCatalog();
   updateConfiguratorPricing();
 }
@@ -2007,6 +2188,15 @@ function returnToGlobeMode() {
 
   dioramaGroup.visible = false;
   globeGroup.visible = true;
+
+  // Restaurar encuadre orbital del cielo y las nubes de algodón
+  if (cloudsGroup) {
+    cloudsGroup.position.set(0, 0, 0);
+    cloudsGroup.scale.set(1.0, 1.0, 1.0);
+  }
+  if (skyDomeMesh) {
+    skyDomeMesh.material.color.setHex(0xFFFFFF);
+  }
 
   const idealDist = getIdealGlobeCameraDistance();
   const ratio = idealDist / 10.2;
@@ -3443,9 +3633,16 @@ function initPassportAndClub() {
 }
 
 // ============================================================================
-// 9. BUCLE DE RENDERIZADO 3D (60 FPS)
+// 9. BUCLE DE RENDERIZADO 3D (60 FPS - ZERO GARBAGE COLLECTION)
 // ============================================================================
 let lastAnimTime = performance.now();
+
+// Vectores preasignados reusables para eliminar asignaciones dinámicas por frame
+const _animCamPos = new THREE.Vector3();
+const _animWorldPos = new THREE.Vector3();
+const _animNormal = new THREE.Vector3();
+const _animViewVec = new THREE.Vector3();
+const _animProjected = new THREE.Vector3();
 
 function animate(now) {
   requestAnimationFrame(animate);
@@ -3460,9 +3657,26 @@ function animate(now) {
 
   controls.update();
 
+  // --- ACTUALIZACIÓN SUAVE DEL CIELO VOLUMÉTRICO Y PARALAJE PROFUNDO ---
+  if (skyDomeMesh) {
+    skyDomeMesh.position.copy(camera.position).multiplyScalar(0.88);
+    skyDomeMesh.rotation.y = now * 0.000035;
+  }
+  if (cloudsGroup) {
+    if (currentMode === 'GLOBE') {
+      cloudsGroup.rotation.y = now * 0.00016;
+      cloudsGroup.position.y = Math.sin(now * 0.00075) * 0.18;
+    } else {
+      cloudsGroup.position.y = 1.8 + Math.sin(now * 0.00075) * 0.08;
+    }
+  }
+  if (botanicalMotes) {
+    botanicalMotes.rotation.y = now * 0.00022;
+    botanicalMotes.rotation.x = Math.sin(now * 0.00045) * 0.06;
+  }
+
   const rect = container.getBoundingClientRect();
-  const camWorldPos = new THREE.Vector3();
-  camera.getWorldPosition(camWorldPos);
+  camera.getWorldPosition(_animCamPos);
 
   if (currentMode === 'GLOBE') {
     // Actualización de física elástica "Jelly Bounce" (Squash & Stretch de plastilina en letras 3D)
@@ -3503,20 +3717,19 @@ function animate(now) {
     });
 
     globeHotspots.forEach(({ anchor, el }) => {
-      const worldPos = new THREE.Vector3();
-      anchor.getWorldPosition(worldPos);
+      anchor.getWorldPosition(_animWorldPos);
 
-      const normal = worldPos.clone().normalize();
-      const viewVec = camWorldPos.clone().sub(worldPos).normalize();
-      const isFront = normal.dot(viewVec) > 0.14;
+      _animNormal.copy(_animWorldPos).normalize();
+      _animViewVec.copy(_animCamPos).sub(_animWorldPos).normalize();
+      const isFront = _animNormal.dot(_animViewVec) > 0.14;
 
       if (!isFront) {
         el.style.opacity = '0';
         el.style.pointerEvents = 'none';
       } else {
-        const projected = worldPos.clone().project(camera);
-        const x = (projected.x * 0.5 + 0.5) * rect.width;
-        const y = (-(projected.y * 0.5) + 0.5) * rect.height;
+        _animProjected.copy(_animWorldPos).project(camera);
+        const x = (_animProjected.x * 0.5 + 0.5) * rect.width;
+        const y = (-(_animProjected.y * 0.5) + 0.5) * rect.height;
         el.style.left = `${x}px`;
         el.style.top = `${y}px`;
         el.style.opacity = '1';
@@ -3526,12 +3739,11 @@ function animate(now) {
   } else if (currentMode === 'HABITAT' && showSlotMarkers) {
     currentSlots.forEach((slot) => {
       if (!slot.markerEl) return;
-      const worldPos = new THREE.Vector3();
-      slot.anchor3D.getWorldPosition(worldPos);
-      worldPos.y += 0.18;
-      const projected = worldPos.project(camera);
-      const x = (projected.x * 0.5 + 0.5) * rect.width;
-      const y = (-(projected.y * 0.5) + 0.5) * rect.height;
+      slot.anchor3D.getWorldPosition(_animWorldPos);
+      _animWorldPos.y += 0.18;
+      _animProjected.copy(_animWorldPos).project(camera);
+      const x = (_animProjected.x * 0.5 + 0.5) * rect.width;
+      const y = (-(_animProjected.y * 0.5) + 0.5) * rect.height;
       slot.markerEl.style.left = `${x}px`;
       slot.markerEl.style.top = `${y}px`;
       slot.markerEl.style.display = 'grid';
