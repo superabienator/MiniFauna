@@ -1,0 +1,2031 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://cdn.jsdelivr.net; connect-src 'self' https://cdn.jsdelivr.net blob:; object-src 'none'; base-uri 'self';" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <meta name="description" content="MiniFauna — Explora nuestro globo terráqueo interactivo 3D, personaliza tu hábitat con figuras articuladas y descubre el catálogo completo compatible con WooCommerce." />
+  <title>MiniFauna — Explorador 3D de Hábitats & Tienda Oficial | Martenscrap</title>
+  <link rel="icon" type="image/png" href="/favicon-minifauna.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Grand+Hotel&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ==========================================================================
+       TOKENS OFICIALES DEL LIBRO DE ESTILOS MINIFAUNA (Extraídos del Logotipo)
+       ========================================================================== */
+    :root {
+      /* Primarios Botánicos & Turquesa Tallado ("iniFauna" + "M" de Lianas) */
+      --mf-lagoon: #28968C;
+      --mf-lagoon-light: #4CC4B9;
+      --mf-lagoon-dark: #1A665F;
+      --mf-emerald: #2E8B57;
+      --mf-vine-dark: #243E1E;
+      --mf-lime: #9CCC3D;
+      --mf-lime-soft: #E9F7CA;
+
+      /* Secundarios de Floración (Flores 3D de la "M": Papaya, Orquídea y Polen) */
+      --mf-papaya: #F58E58;
+      --mf-papaya-dark: #C96A38;
+      --mf-orchid: #F28BB2;
+      --mf-orchid-soft: #FDE8F0;
+      --mf-pollen: #FCD34D;
+
+      /* Superficies y Fondos Luminosos */
+      --mf-bg-page: #F6FBF7;
+      --mf-bg-tint: #E8F5EE;
+      --mf-surface: #FFFFFF;
+      --mf-border: #CDE5DC;
+      --mf-text-main: #1F3528;
+      --mf-text-muted: #527060;
+      --mf-shadow: 0 14px 34px -8px rgba(26, 102, 95, 0.12);
+      --mf-clay-bevel: inset 0 2px 0 rgba(255, 255, 255, 0.45);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      overflow-x: hidden;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      background-color: var(--mf-bg-page);
+      background-image:
+        radial-gradient(at 12% 6%, rgba(156, 204, 61, 0.18) 0px, transparent 42%),
+        radial-gradient(at 88% 10%, rgba(40, 150, 140, 0.18) 0px, transparent 48%),
+        radial-gradient(at 50% 42%, rgba(245, 142, 88, 0.12) 0px, transparent 55%),
+        radial-gradient(at 85% 75%, rgba(242, 139, 178, 0.14) 0px, transparent 45%);
+      color: var(--mf-text-main);
+      overflow-x: hidden;
+      width: 100%;
+      line-height: 1.5;
+    }
+
+    h1, h2, h3, h4, .font-display {
+      font-family: 'Fredoka', sans-serif;
+      color: var(--mf-vine-dark);
+    }
+
+    button, select, input, textarea {
+      font-family: inherit;
+    }
+
+    /* BARRA DE ANUNCIO SUPERIOR BOTÁNICA */
+    .top-banner {
+      background: linear-gradient(90deg, var(--mf-vine-dark) 0%, var(--mf-emerald) 45%, var(--mf-lagoon) 100%);
+      color: #ffffff;
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 8px 16px;
+      border-bottom: 2px solid var(--mf-lime);
+    }
+
+    .top-banner-inner {
+      max-width: 1280px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .top-badge {
+      background: var(--mf-lime);
+      color: var(--mf-vine-dark);
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* NAVBAR STICKY CON ESTILO ORGÁNICO */
+    .navbar {
+      position: sticky;
+      top: 0;
+      z-index: 60;
+      background: rgba(246, 251, 247, 0.92);
+      backdrop-filter: blur(14px);
+      border-bottom: 2px solid var(--mf-border);
+      box-shadow: 0 6px 22px rgba(26, 102, 95, 0.06);
+    }
+
+    .navbar-inner {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 8px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      text-decoration: none;
+    }
+
+    .nav-logo-img {
+      height: 54px;
+      width: auto;
+      object-fit: contain;
+      filter: drop-shadow(0 3px 6px rgba(36, 62, 30, 0.12));
+      transition: transform 0.2s ease;
+    }
+
+    .nav-logo-img:hover {
+      transform: scale(1.04);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      list-style: none;
+    }
+
+    .nav-links a, .nav-link-btn {
+      text-decoration: none;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--mf-vine-dark);
+      font-weight: 800;
+      font-size: 0.88rem;
+      transition: color 0.18s;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .nav-links a:hover, .nav-link-btn:hover {
+      color: var(--mf-lagoon);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* BOTONES CON RELIEVE TALLADO 3D (Tactile Claymorphism) */
+    .icon-btn {
+      position: relative;
+      min-width: 44px;
+      min-height: 44px;
+      border-radius: 16px;
+      border: 2px solid var(--mf-border);
+      background: #ffffff;
+      color: var(--mf-vine-dark);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 0 13px;
+      font-weight: 800;
+      font-size: 0.84rem;
+      transition: all 0.18s;
+      box-shadow: 0 3px 0 var(--mf-border);
+    }
+
+    .icon-btn:hover {
+      border-color: var(--mf-lagoon);
+      transform: translateY(-1px);
+    }
+
+    .icon-btn.cart-btn {
+      background: linear-gradient(180deg, var(--mf-lagoon-light) 0%, var(--mf-lagoon) 100%);
+      color: #ffffff;
+      border: 2px solid var(--mf-lagoon-dark);
+      padding: 0 18px;
+      box-shadow: var(--mf-clay-bevel), 0 4px 0 var(--mf-lagoon-dark), 0 8px 18px rgba(40, 150, 140, 0.28);
+    }
+
+    .icon-btn.cart-btn:hover {
+      filter: brightness(1.05);
+      transform: translateY(-1px);
+    }
+
+    .icon-btn.cart-btn:active {
+      transform: translateY(2px);
+      box-shadow: var(--mf-clay-bevel), 0 1px 0 var(--mf-lagoon-dark);
+    }
+
+    .badge-count {
+      background: var(--mf-orchid);
+      color: var(--mf-vine-dark);
+      font-size: 0.72rem;
+      font-weight: 900;
+      padding: 1px 7px;
+      border-radius: 999px;
+      min-width: 22px;
+      text-align: center;
+      border: 1.5px solid #ffffff;
+    }
+
+    /* CABECERA HERO CON EL LOGOTIPO OFICIAL ADJUNTO */
+    .hero-header {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 18px 20px 14px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .hero-pills {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .pill-tag {
+      font-size: 0.76rem;
+      font-weight: 800;
+      padding: 6px 15px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1.5px solid rgba(255,255,255,0.8);
+      box-shadow: 0 3px 10px rgba(36, 62, 30, 0.06);
+    }
+
+    .pill-lagoon { background: #D5F2EE; color: var(--mf-lagoon-dark); }
+    .pill-sprout { background: var(--mf-lime-soft); color: var(--mf-vine-dark); }
+    .pill-papaya { background: #FFE6D8; color: #9A3412; }
+    .pill-orchid { background: var(--mf-orchid-soft); color: #9D174D; }
+
+    .minifauna-logo-stage {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      padding: 2px 12px;
+      animation: floatGentle 4.8s ease-in-out infinite;
+    }
+
+    .hero-logo-img {
+      width: 440px;
+      max-width: 88vw;
+      height: auto;
+      object-fit: contain;
+      filter: drop-shadow(0 10px 18px rgba(36, 62, 30, 0.14));
+    }
+
+    @keyframes floatGentle {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-6px); }
+    }
+
+    .hero-subtitle {
+      max-width: 740px;
+      font-size: 0.98rem;
+      color: var(--mf-text-muted);
+      font-weight: 600;
+    }
+
+    /* ==========================================================================
+       SECCIÓN 1: EXPLORADOR INTERACTIVO 3D (ESTILO BOTÁNICO & TURQUESA JADE)
+       ========================================================================== */
+    .explorer-section {
+      max-width: 1340px;
+      margin: 6px auto 38px;
+      padding: 0 20px;
+    }
+
+    .explorer-frame {
+      position: relative;
+      width: 100%;
+      height: 670px;
+      border-radius: 34px;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 50% 46%, rgba(255, 255, 255, 0.88) 0%, rgba(224, 242, 254, 0.55) 45%, transparent 72%),
+        linear-gradient(180deg, #D5F5E3 0%, #E0F2FE 52%, #FFFBEB 100%);
+      border: 5px solid #ffffff;
+      outline: 2px solid var(--mf-border);
+      box-shadow: 0 26px 55px -12px rgba(26, 102, 95, 0.22);
+      touch-action: none;
+      transition: background 0.8s ease;
+    }
+
+    #canvas-container {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    #hotspot-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .stage-topbar {
+      position: absolute;
+      top: 16px;
+      left: 18px;
+      right: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+      z-index: 25;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .stage-status-pill {
+      pointer-events: auto;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      padding: 8px 18px;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 0.83rem;
+      color: var(--mf-vine-dark);
+      box-shadow: 0 8px 20px rgba(36, 62, 30, 0.1);
+      border: 2px solid var(--mf-border);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .stage-actions {
+      pointer-events: auto;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .stage-btn {
+      border: 2px solid var(--mf-border);
+      cursor: pointer;
+      font-weight: 800;
+      font-size: 0.8rem;
+      padding: 9px 16px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.96);
+      color: var(--mf-vine-dark);
+      box-shadow: 0 3px 0 var(--mf-border), 0 6px 16px rgba(0, 0, 0, 0.08);
+      transition: all 0.18s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 42px;
+    }
+
+    .stage-btn:hover {
+      background: #ffffff;
+      border-color: var(--mf-lagoon);
+      transform: translateY(-1px);
+    }
+
+    .stage-btn.primary {
+      background: linear-gradient(180deg, var(--mf-papaya) 0%, #E0753C 100%);
+      color: white;
+      border-color: var(--mf-papaya-dark);
+      box-shadow: var(--mf-clay-bevel), 0 4px 0 var(--mf-papaya-dark), 0 8px 20px rgba(245, 142, 88, 0.35);
+    }
+
+    .camera-controls-bar {
+      position: absolute;
+      bottom: 18px;
+      left: 18px;
+      display: flex;
+      gap: 6px;
+      z-index: 25;
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(10px);
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 2px solid var(--mf-border);
+      box-shadow: 0 8px 24px rgba(36, 62, 30, 0.12);
+    }
+
+    .cam-btn {
+      background: var(--mf-bg-tint);
+      color: var(--mf-vine-dark);
+      border: none;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 800;
+      display: grid;
+      place-items: center;
+      transition: all 0.15s;
+    }
+
+    .cam-btn:hover {
+      background: var(--mf-lime-soft);
+      transform: scale(1.06);
+    }
+
+    .cam-btn.active-toggle {
+      background: var(--mf-lagoon);
+      color: white;
+    }
+
+    .globe-hint {
+      position: absolute;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 255, 255, 0.95);
+      color: var(--mf-vine-dark);
+      backdrop-filter: blur(10px);
+      padding: 10px 22px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      border: 2px solid var(--mf-border);
+      pointer-events: none;
+      z-index: 15;
+      box-shadow: 0 8px 25px rgba(36, 62, 30, 0.12);
+      white-space: nowrap;
+      transition: opacity 0.25s;
+    }
+
+    /* Hotspots del globo sincronizados con las flores y hojas del logo */
+    .hotspot {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      pointer-events: auto;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: #ffffff;
+      color: var(--mf-vine-dark);
+      padding: 5px 13px 5px 6px;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 0.79rem;
+      box-shadow: 0 3px 0 var(--mf-border), 0 8px 20px rgba(36, 62, 30, 0.22);
+      border: 2px solid var(--mf-lime);
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s;
+    }
+
+    .hotspot:hover {
+      transform: translate(-50%, -50%) scale(1.14);
+      z-index: 25;
+      border-color: var(--mf-papaya);
+    }
+
+    .hotspot-dot {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 13px;
+      color: white;
+      position: relative;
+    }
+
+    .hotspot-dot::after {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      border: 2px solid currentColor;
+      animation: pulse 1.8s infinite;
+    }
+
+    /* Marcadores numerados de Slots en el Hábitat */
+    .slot-marker {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      pointer-events: auto;
+      cursor: pointer;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: #ffffff;
+      color: var(--mf-vine-dark);
+      border: 2.5px solid var(--mf-lagoon);
+      font-size: 0.75rem;
+      font-weight: 900;
+      display: grid;
+      place-items: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      transition: all 0.18s ease;
+    }
+
+    .slot-marker:hover {
+      transform: translate(-50%, -50%) scale(1.2);
+      background: var(--mf-lagoon);
+      color: white;
+    }
+
+    .slot-marker.active-slot {
+      background: var(--mf-emerald);
+      color: white;
+      border-color: var(--mf-lime);
+      transform: translate(-50%, -50%) scale(1.22);
+      box-shadow: 0 0 0 4px rgba(156, 204, 61, 0.45);
+    }
+
+    .slot-marker.occupied {
+      background: var(--mf-papaya);
+      color: white;
+      border-color: #ffffff;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.9); opacity: 0.9; }
+      100% { transform: scale(1.6); opacity: 0; }
+    }
+
+    /* Barra flotante de pieza 3D seleccionada */
+    .selection-toolbar {
+      position: absolute;
+      top: 68px;
+      left: 18px;
+      background: rgba(255, 255, 255, 0.97);
+      color: var(--mf-vine-dark);
+      backdrop-filter: blur(12px);
+      padding: 12px 14px;
+      border-radius: 20px;
+      border: 2px solid var(--mf-lime);
+      box-shadow: 0 12px 30px rgba(36, 62, 30, 0.18);
+      z-index: 25;
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+      min-width: 260px;
+    }
+
+    .selection-toolbar.visible {
+      display: flex;
+    }
+
+    .sel-title {
+      font-size: 0.82rem;
+      font-weight: 800;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--mf-lagoon-dark);
+    }
+
+    .sel-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .sel-btn {
+      border: 1.5px solid var(--mf-border);
+      padding: 6px 10px;
+      border-radius: 10px;
+      font-size: 0.74rem;
+      font-weight: 800;
+      cursor: pointer;
+      background: var(--mf-bg-page);
+      color: var(--mf-vine-dark);
+      transition: all 0.15s;
+    }
+
+    .sel-btn:hover {
+      background: var(--mf-lime-soft);
+      border-color: var(--mf-emerald);
+    }
+
+    .sel-btn.sel-danger {
+      background: #FEE2E2;
+      color: #DC2626;
+      border-color: #FECACA;
+    }
+
+    .sel-btn.sel-danger:hover {
+      background: #EF4444;
+      color: white;
+    }
+
+    /* Panel lateral derecho dentro del visor 3D */
+    .configurator-panel {
+      position: absolute;
+      top: 68px;
+      right: 18px;
+      bottom: 18px;
+      width: 390px;
+      max-width: calc(100% - 36px);
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(16px);
+      border-radius: 26px;
+      border: 2.5px solid var(--mf-border);
+      box-shadow: 0 20px 45px rgba(26, 102, 95, 0.18);
+      padding: 15px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      z-index: 22;
+      transform: translateX(440px);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .configurator-panel.active {
+      transform: translateX(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .habitat-header {
+      border-bottom: 1.5px solid var(--mf-border);
+      padding-bottom: 7px;
+    }
+
+    .badges-row {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      margin-bottom: 3px;
+      flex-wrap: wrap;
+    }
+
+    .habitat-badge {
+      font-size: 0.66rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #FFE6D8;
+      color: #9A3412;
+    }
+
+    .zoo-badge {
+      font-size: 0.66rem;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: var(--mf-lime-soft);
+      color: var(--mf-vine-dark);
+    }
+
+    .habitat-header h2 {
+      font-size: 1.12rem;
+      color: var(--mf-vine-dark);
+    }
+
+    .zoo-note {
+      font-size: 0.72rem;
+      color: var(--mf-text-muted);
+      line-height: 1.3;
+    }
+
+    .artisan-base-box {
+      background: var(--mf-bg-tint);
+      border: 1.5px solid var(--mf-border);
+      border-radius: 14px;
+      padding: 7px 9px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .artisan-base-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.73rem;
+      font-weight: 800;
+      color: var(--mf-vine-dark);
+    }
+
+    .base-select {
+      width: 100%;
+      padding: 6px 8px;
+      border-radius: 9px;
+      border: 1.5px solid var(--mf-lagoon);
+      font-size: 0.76rem;
+      font-weight: 700;
+      background: white;
+      color: var(--mf-vine-dark);
+      cursor: pointer;
+    }
+
+    .upload-glb-label {
+      background: var(--mf-lagoon);
+      color: white;
+      font-size: 0.68rem;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 2px 0 var(--mf-lagoon-dark);
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 4px;
+      background: var(--mf-bg-tint);
+      padding: 4px;
+      border-radius: 11px;
+    }
+
+    .tab-btn {
+      border: none;
+      background: transparent;
+      padding: 6px 4px;
+      border-radius: 8px;
+      font-weight: 800;
+      font-size: 0.73rem;
+      color: var(--mf-text-muted);
+      cursor: pointer;
+    }
+
+    .tab-btn.active {
+      background: var(--mf-lagoon);
+      color: #ffffff;
+      box-shadow: 0 2px 6px rgba(40, 150, 140, 0.25);
+    }
+
+    .mini-catalog-grid {
+      flex: 1;
+      overflow-y: auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px;
+      padding-right: 3px;
+      align-content: start;
+    }
+
+    .mini-card {
+      background: #ffffff;
+      border: 2px solid var(--mf-border);
+      border-radius: 13px;
+      padding: 7px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 4px;
+    }
+
+    .mini-card.has-items {
+      border-color: var(--mf-emerald);
+      background: var(--mf-lime-soft);
+    }
+
+    .mini-preview {
+      height: 40px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .qty-badge {
+      position: absolute;
+      top: 3px;
+      left: 5px;
+      background: var(--mf-emerald);
+      color: white;
+      font-size: 0.63rem;
+      font-weight: 800;
+      padding: 1px 6px;
+      border-radius: 999px;
+    }
+
+    .qty-btns {
+      display: flex;
+      gap: 4px;
+    }
+
+    .qty-btn {
+      width: 24px;
+      height: 24px;
+      border-radius: 7px;
+      border: none;
+      font-weight: 900;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+    }
+
+    .qty-btn.remove { background: #FEE2E2; color: #DC2626; }
+    .qty-btn.add { background: var(--mf-lime); color: var(--mf-vine-dark); }
+
+    .placed-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      grid-column: 1 / -1;
+    }
+
+    .placed-item-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #ffffff;
+      border: 1.5px solid var(--mf-border);
+      padding: 6px 9px;
+      border-radius: 10px;
+      font-size: 0.75rem;
+    }
+
+    .mini-action-btn {
+      border: none;
+      padding: 4px 7px;
+      border-radius: 6px;
+      font-size: 0.7rem;
+      font-weight: 800;
+      cursor: pointer;
+      background: var(--mf-bg-tint);
+      color: var(--mf-vine-dark);
+    }
+
+    .mini-action-btn.delete {
+      background: #FEE2E2;
+      color: #DC2626;
+    }
+
+    .panel-footer {
+      border-top: 1.5px solid var(--mf-border);
+      padding-top: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    /* ==========================================================================
+       SECCIÓN 2: CATÁLOGO DE ARTÍCULOS CON ESTÉTICA BOTÁNICA & TALLADA
+       ========================================================================== */
+    .catalog-section {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 44px 20px 64px;
+    }
+
+    .section-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+
+    .section-title {
+      font-size: clamp(1.8rem, 3.2vw, 2.45rem);
+      color: var(--mf-vine-dark);
+      line-height: 1.15;
+    }
+
+    .text-gradient {
+      background: linear-gradient(135deg, var(--mf-emerald) 0%, var(--mf-lagoon) 55%, var(--mf-papaya) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      padding-bottom: 0.12em;
+    }
+
+    /* Pestañas de Departamento con estilo Tallado 3D */
+    .dept-tabs {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      margin-bottom: 16px;
+    }
+
+    .dept-tab {
+      border: 2px solid var(--mf-border);
+      background: #ffffff;
+      color: var(--mf-vine-dark);
+      font-weight: 800;
+      font-size: 0.81rem;
+      padding: 10px 18px;
+      border-radius: 18px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.18s;
+      min-height: 44px;
+      box-shadow: 0 3px 0 var(--mf-border);
+    }
+
+    .dept-tab:hover {
+      border-color: var(--mf-lagoon);
+      transform: translateY(-1px);
+    }
+
+    .dept-tab.active {
+      background: linear-gradient(180deg, var(--mf-lagoon-light) 0%, var(--mf-lagoon) 100%);
+      color: #ffffff;
+      border-color: var(--mf-lagoon-dark);
+      box-shadow: var(--mf-clay-bevel), 0 4px 0 var(--mf-lagoon-dark), 0 8px 20px rgba(40, 150, 140, 0.25);
+    }
+
+    /* Barra secundaria de selectores y filtros */
+    .filters-bar {
+      background: #ffffff;
+      border: 2px solid var(--mf-border);
+      border-radius: 22px;
+      padding: 14px 18px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      box-shadow: var(--mf-shadow);
+      margin-bottom: 28px;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .filter-label {
+      font-size: 0.74rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: var(--mf-text-muted);
+      letter-spacing: 0.04em;
+    }
+
+    .filter-select, .filter-search {
+      background: var(--mf-bg-page);
+      border: 1.5px solid var(--mf-border);
+      border-radius: 12px;
+      padding: 8px 12px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--mf-vine-dark);
+      min-height: 40px;
+    }
+
+    .check-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--mf-vine-dark);
+      cursor: pointer;
+      padding: 6px 10px;
+      border-radius: 10px;
+      background: var(--mf-bg-tint);
+      border: 1px solid var(--mf-border);
+    }
+
+    /* Malla de productos */
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 22px;
+    }
+
+    @media (max-width: 1024px) {
+      .products-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    @media (max-width: 768px) {
+      .products-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+      .explorer-frame { height: 740px; }
+      .configurator-panel {
+        top: auto;
+        left: 10px;
+        right: 10px;
+        bottom: 10px;
+        width: auto;
+        height: 48%;
+      }
+      .nav-links { display: none; }
+    }
+
+    .product-card {
+      background: #ffffff;
+      border-radius: 24px;
+      border: 2px solid var(--mf-border);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.22s ease;
+      box-shadow: var(--mf-shadow);
+      position: relative;
+    }
+
+    .product-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 22px 40px -10px rgba(26, 102, 95, 0.2);
+      border-color: var(--mf-lime);
+    }
+
+    .product-visual {
+      height: 175px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 64px;
+      cursor: pointer;
+      overflow: hidden;
+    }
+
+    .product-badge {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      background: rgba(255, 255, 255, 0.94);
+      color: var(--mf-vine-dark);
+      font-size: 0.68rem;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1.5px solid var(--mf-lime);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    .wishlist-heart-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.92);
+      border: 1.5px solid var(--mf-orchid);
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      font-size: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      transition: transform 0.15s;
+    }
+
+    .wishlist-heart-btn:hover {
+      transform: scale(1.14);
+      background: var(--mf-orchid-soft);
+    }
+
+    .try-3d-pill {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      background: var(--mf-lagoon-dark);
+      color: #ffffff;
+      border: 1.5px solid var(--mf-lime);
+      font-size: 0.7rem;
+      font-weight: 800;
+      padding: 5px 11px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .try-3d-pill:hover {
+      background: var(--mf-lagoon);
+      transform: scale(1.05);
+    }
+
+    .product-body {
+      padding: 14px 16px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 1;
+    }
+
+    .product-biome-tag {
+      font-size: 0.7rem;
+      font-weight: 800;
+      color: var(--mf-lagoon);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .product-title {
+      font-size: 0.98rem;
+      font-weight: 800;
+      color: var(--mf-vine-dark);
+      line-height: 1.25;
+    }
+
+    .product-desc {
+      font-size: 0.78rem;
+      color: var(--mf-text-muted);
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .product-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 8px;
+      border-top: 1px solid var(--mf-bg-tint);
+      margin-top: auto;
+    }
+
+    .product-price {
+      font-size: 1.16rem;
+      font-weight: 900;
+      color: var(--mf-vine-dark);
+    }
+
+    .add-cart-btn {
+      background: linear-gradient(180deg, var(--mf-lagoon-light) 0%, var(--mf-lagoon) 100%);
+      color: #ffffff;
+      border: 1.5px solid var(--mf-lagoon-dark);
+      padding: 8px 14px;
+      border-radius: 13px;
+      font-size: 0.78rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.18s;
+      min-height: 40px;
+      box-shadow: var(--mf-clay-bevel), 0 3px 0 var(--mf-lagoon-dark);
+    }
+
+    .add-cart-btn:hover {
+      background: linear-gradient(180deg, var(--mf-papaya) 0%, #E0753C 100%);
+      border-color: var(--mf-papaya-dark);
+      box-shadow: var(--mf-clay-bevel), 0 3px 0 var(--mf-papaya-dark);
+      transform: translateY(-1px);
+    }
+
+    /* Botón Cargar Más (+8) con estilo Tallado del Logo */
+    .load-more-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      margin-top: 36px;
+      padding-top: 24px;
+      border-top: 2px dashed var(--mf-border);
+    }
+
+    .load-more-btn {
+      background: linear-gradient(180deg, var(--mf-emerald) 0%, var(--mf-lagoon) 100%);
+      color: white;
+      border: 2px solid var(--mf-lagoon-dark);
+      padding: 14px 32px;
+      border-radius: 20px;
+      font-weight: 800;
+      font-size: 0.92rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: var(--mf-clay-bevel), 0 5px 0 var(--mf-lagoon-dark), 0 12px 28px rgba(40, 150, 140, 0.28);
+      transition: all 0.2s;
+      min-height: 48px;
+    }
+
+    .load-more-btn:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.06);
+    }
+
+    /* ==========================================================================
+       SECCIÓN LIBRO DE ESTILOS EN VIVO (SINCRONIZADO CON EL LOGO)
+       ========================================================================== */
+    .stylebook-section {
+      max-width: 1280px;
+      margin: 0 auto 48px;
+      padding: 32px 24px;
+      background: #ffffff;
+      border: 2.5px solid var(--mf-border);
+      border-radius: 32px;
+      box-shadow: var(--mf-shadow);
+    }
+
+    .swatches-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .swatch-card {
+      border-radius: 18px;
+      border: 1.5px solid var(--mf-border);
+      overflow: hidden;
+      background: var(--mf-bg-page);
+    }
+
+    .swatch-color {
+      height: 68px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: flex-end;
+      padding: 6px 10px;
+      font-size: 0.72rem;
+      font-weight: 900;
+      color: white;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.35);
+    }
+
+    .swatch-info {
+      padding: 10px 12px;
+      font-size: 0.76rem;
+    }
+
+    /* ==========================================================================
+       SECCIÓN 3: PREGUNTAS FRECUENTES, CONTACTO Y FOOTER BOTÁNICO
+       ========================================================================== */
+    .info-section {
+      max-width: 1140px;
+      margin: 0 auto;
+      padding: 24px 20px 64px;
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 32px;
+    }
+
+    @media (max-width: 900px) {
+      .info-section { grid-template-columns: 1fr; }
+    }
+
+    .faq-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .faq-item {
+      background: #ffffff;
+      border: 2px solid var(--mf-border);
+      border-radius: 18px;
+      overflow: hidden;
+    }
+
+    .faq-question {
+      width: 100%;
+      text-align: left;
+      padding: 15px 18px;
+      background: none;
+      border: none;
+      font-weight: 800;
+      font-size: 0.9rem;
+      color: var(--mf-vine-dark);
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .faq-answer {
+      display: none;
+      padding: 0 18px 16px;
+      font-size: 0.84rem;
+      color: var(--mf-text-muted);
+      line-height: 1.55;
+    }
+
+    .faq-item.open .faq-answer {
+      display: block;
+    }
+
+    .contact-card {
+      background: #ffffff;
+      border: 2px solid var(--mf-border);
+      border-radius: 26px;
+      padding: 24px;
+      box-shadow: var(--mf-shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 11px 14px;
+      border-radius: 12px;
+      border: 1.5px solid var(--mf-border);
+      font-size: 0.85rem;
+      background: var(--mf-bg-page);
+      color: var(--mf-vine-dark);
+    }
+
+    /* FOOTER EN VERDE BOSQUE PROFUNDO (Extraído de las lianas del logo) */
+    .site-footer {
+      background: var(--mf-vine-dark);
+      color: #E8F5EE;
+      padding: 52px 20px 36px;
+      border-top: 5px solid var(--mf-lime);
+    }
+
+    .footer-inner {
+      max-width: 1280px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 36px;
+    }
+
+    .guarantees-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      padding-bottom: 32px;
+      border-bottom: 1px solid rgba(255,255,255,0.14);
+    }
+
+    @media (max-width: 768px) {
+      .guarantees-grid { grid-template-columns: 1fr; }
+    }
+
+    .guarantee-box {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: rgba(255,255,255,0.06);
+      padding: 16px;
+      border-radius: 18px;
+      border: 1px solid rgba(156, 204, 61, 0.25);
+    }
+
+    .footer-cols {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 28px;
+    }
+
+    @media (max-width: 900px) {
+      .footer-cols { grid-template-columns: 1fr 1fr; }
+    }
+
+    .footer-bottom {
+      padding-top: 24px;
+      border-top: 1px solid rgba(255,255,255,0.14);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      font-size: 0.78rem;
+      color: #A7C4B5;
+    }
+
+    .legal-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+
+    .legal-link-btn {
+      background: none;
+      border: none;
+      color: var(--mf-lime);
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    /* DRAWER Y MODAL LEGAL */
+    .drawer-backdrop, .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(36, 62, 30, 0.55);
+      backdrop-filter: blur(5px);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .drawer-backdrop.open, .modal-backdrop.open {
+      display: flex;
+    }
+
+    .cart-drawer {
+      margin-left: auto;
+      width: 420px;
+      max-width: 92vw;
+      height: 100vh;
+      background: var(--mf-bg-page);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: -10px 0 35px rgba(0,0,0,0.25);
+    }
+
+    .legal-modal {
+      background: var(--mf-bg-page);
+      width: 760px;
+      max-width: 94vw;
+      max-height: 88vh;
+      border-radius: 26px;
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.35);
+      border: 2px solid var(--mf-border);
+      overflow: hidden;
+    }
+
+    .legal-tabs {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--mf-border);
+    }
+
+    .legal-tab-btn {
+      padding: 8px 14px;
+      border-radius: 10px;
+      border: 1.5px solid var(--mf-border);
+      background: white;
+      font-size: 0.78rem;
+      font-weight: 800;
+      cursor: pointer;
+      white-space: nowrap;
+      color: var(--mf-vine-dark);
+    }
+
+    .legal-tab-btn.active {
+      background: var(--mf-lagoon);
+      color: white;
+      border-color: var(--mf-lagoon-dark);
+    }
+
+    .legal-body {
+      overflow-y: auto;
+      font-size: 0.85rem;
+      color: var(--mf-text-main);
+      line-height: 1.6;
+      padding-right: 6px;
+    }
+
+    .cookie-banner {
+      position: fixed;
+      bottom: 18px;
+      right: 18px;
+      left: 18px;
+      max-width: 540px;
+      background: #ffffff;
+      border: 2.5px solid var(--mf-lagoon);
+      border-radius: 22px;
+      padding: 16px 20px;
+      box-shadow: 0 18px 40px rgba(26, 102, 95, 0.22);
+      z-index: 90;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 24px;
+      background: var(--mf-vine-dark);
+      color: white;
+      padding: 14px 20px;
+      border-radius: 16px;
+      font-size: 0.85rem;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+      border-left: 5px solid var(--mf-lime);
+      transform: translateY(140px);
+      opacity: 0;
+      transition: all 0.3s ease;
+      z-index: 120;
+      max-width: 400px;
+      pointer-events: none;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+
+  <!-- 0. BARRA DE ANUNCIO SUPERIOR -->
+  <div class="top-banner">
+    <div class="top-banner-inner">
+      <div>
+        <span class="top-badge">🌿 Diseño Botánico & 3D</span>
+        <span style="margin-left:8px;">¡Envíos gratis en pedidos superiores a 45 € a toda la Península! • Colección Oficial WooCommerce</span>
+      </div>
+      <div>📍 Valencia, España • <strong>Martenscrap • Marta Pastor Escribano</strong></div>
+    </div>
+  </div>
+
+  <!-- NAVBAR PRINCIPAL CON EL LOGOTIPO OFICIAL ADJUNTO -->
+  <nav class="navbar" aria-label="Navegación principal">
+    <div class="navbar-inner">
+      <a href="#top" class="nav-brand" aria-label="Inicio MiniFauna">
+        <img src="/logo-minifauna.png" alt="MiniFauna Logotipo Oficial" class="nav-logo-img" />
+      </a>
+
+      <ul class="nav-links">
+        <li><a href="#explorador-3d">🌍 Bola del Mundo 3D</a></li>
+        <li><a href="#catalogo-tienda">🦖 Catálogo MiniFauna</a></li>
+        <li><a href="#preguntas-frecuentes">❓ Preguntas Frecuentes</a></li>
+        <li><a href="#contacto">✉️ Contacto</a></li>
+      </ul>
+
+      <div class="nav-actions">
+        <button id="nav-wishlist-btn" class="icon-btn" aria-label="Ver favoritos">
+          🌸 <span id="wishlist-count" class="badge-count">0</span>
+        </button>
+        <button id="nav-cart-btn" class="icon-btn cart-btn" aria-label="Abrir carrito WooCommerce">
+          🛒 Carrito (<span id="nav-cart-count">1</span>) · <span id="nav-cart-total">19.90€</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- CABECERA HERO CON EL LOGOTIPO OFICIAL DE LIANAS Y TURQUESA TALLADO -->
+  <header id="top" class="hero-header">
+    <div class="hero-pills">
+      <span class="pill-tag pill-sprout">🌿 1º Gira la Bola del Mundo 3D</span>
+      <span class="pill-tag pill-lagoon">🏔️ 2º Personaliza tu Hábitat Orgánico</span>
+      <span class="pill-tag pill-papaya">🌼 3º Añade Figuras o Packs a tu Cesta</span>
+    </div>
+
+    <div class="minifauna-logo-stage">
+      <img src="/logo-minifauna.png" alt="MiniFauna — Logotipo Botánico 3D" class="hero-logo-img" />
+    </div>
+
+    <p class="hero-subtitle">
+      Explora los ecosistemas del planeta en 3D, coloca tus figuras articuladas sobre escenarios naturales de montañas, dunas, cascadas o islas volcánicas y crea tu colección a medida.
+    </p>
+  </header>
+
+  <!-- ==========================================================================
+       1. EN PRIMER LUGAR: BOLA DEL MUNDO INTERACTIVA Y CONFIGURADOR DE HÁBITATS
+       ========================================================================== -->
+  <section id="explorador-3d" class="explorer-section" aria-label="Explorador 3D del Globo y Hábitats">
+    <div class="explorer-frame">
+      <div id="canvas-container"></div>
+      <div id="hotspot-layer"></div>
+
+      <div class="stage-topbar">
+        <div class="stage-status-pill">
+          <span id="stage-mode-icon">🌍</span>
+          <span id="stage-mode-text">Modo Globo Terráqueo Infantil · 6 Biomas Activos</span>
+        </div>
+
+        <div class="stage-actions">
+          <button id="btn-back-globe" class="stage-btn" style="display:none;border-color:var(--mf-lagoon);">
+            🌍 Volver a la Bola del Mundo
+          </button>
+          <button id="btn-toggle-slots" class="stage-btn" style="display:none;">
+            📍 Puntos del Hábitat (ON)
+          </button>
+          <button id="btn-stage-add-pack" class="stage-btn primary">
+            🛒 Añadir Hábitat Configurado (<span id="stage-pack-price">19.90€</span>)
+          </button>
+        </div>
+      </div>
+
+      <div id="selection-toolbar" class="selection-toolbar">
+        <div class="sel-title">
+          <span id="sel-item-name">Pieza seleccionada</span>
+          <button id="sel-close" style="background:none;border:none;cursor:pointer;font-weight:900;">✕</button>
+        </div>
+        <div class="sel-actions">
+          <button id="sel-rotate-left" class="sel-btn">↺ -45°</button>
+          <button id="sel-rotate-right" class="sel-btn">↻ +45°</button>
+          <button id="sel-scale-up" class="sel-btn">➕ Escala</button>
+          <select id="sel-move-slot" class="sel-btn" title="Mover pieza a otro punto del hábitat" aria-label="Mover a otro punto">
+            <option value="">↔ Mover a Punto...</option>
+            <option value="0">Punto 1</option>
+            <option value="1">Punto 2</option>
+            <option value="2">Punto 3</option>
+            <option value="3">Punto 4</option>
+            <option value="4">Punto 5</option>
+            <option value="5">Punto 6</option>
+            <option value="6">Punto 7</option>
+            <option value="7">Punto 8</option>
+          </select>
+          <button id="sel-delete" class="sel-btn sel-danger">🗑️ Quitar Pieza</button>
+        </div>
+      </div>
+
+      <div class="camera-controls-bar">
+        <button id="cam-zoom-in" class="cam-btn" title="Acercar Zoom">➕</button>
+        <button id="cam-zoom-out" class="cam-btn" title="Alejar Zoom">➖</button>
+        <button id="cam-reset" class="cam-btn" title="Centrar Cámara">🎯</button>
+        <button id="cam-autorotate" class="cam-btn active-toggle" title="Giro Automático">🔄</button>
+      </div>
+
+      <div id="globe-hint" class="globe-hint">
+        🌿 Arrastra para girar · Rueda o ➕/➖ para zoom libre · <strong>Clica en un bioma del mapa</strong> para abrir su hábitat 3D
+      </div>
+
+      <aside id="configurator-panel" class="configurator-panel" aria-label="Configurador de Hábitat">
+        <div class="habitat-header">
+          <div class="badges-row">
+            <span id="habitat-badge" class="habitat-badge">Bioma</span>
+            <span class="zoo-badge">🌱 Validado Zoológicamente</span>
+          </div>
+          <h2 id="habitat-title">Sabana del Serengueti</h2>
+          <p id="habitat-zoo-note" class="zoo-note">Bioma abierto con charca estacional, kopjes rocosos y acacias.</p>
+        </div>
+
+        <div class="artisan-base-box">
+          <div class="artisan-base-top">
+            <span>🏔️ Escenario Base (Modelos):</span>
+            <label class="upload-glb-label">
+              📂 Cargar .GLB/.STL
+              <input type="file" id="artisan-file-input" accept=".glb,.gltf,.stl" style="display:none;" />
+            </label>
+          </div>
+          <select id="base-style-select" class="base-select" aria-label="Seleccionar tipo de terreno base">
+            <option value="mountain_waterfall">⛰️ Montañas Rocosas y Cascada Natural (360°)</option>
+            <option value="oasis_dunes">🏝️ Dunas Curvas y Charca Oasis Central (360°)</option>
+            <option value="river_valley">🌊 Valle Fluvial con Río y Colinas (360°)</option>
+            <option value="volcanic_island">🌋 Isla Volcánica / Caldera Natural (360°)</option>
+            <option value="classic_cage">📦 Expositor Clásico con Vallas (Estilo Foto)</option>
+          </select>
+        </div>
+
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="figures">🐾 Figuras (<span id="tab-count-fig">0</span>)</button>
+          <button class="tab-btn" data-tab="props">🌴 Extras (<span id="tab-count-prop">0</span>)</button>
+          <button class="tab-btn" data-tab="placed">📋 Quitar (<span id="tab-count-all">0</span>)</button>
+        </div>
+
+        <div id="mini-catalog-grid" class="mini-catalog-grid"></div>
+
+        <div class="panel-footer">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;">
+            <span style="font-size:0.76rem;color:var(--mf-text-muted);font-weight:700;">Total Hábitat + Piezas:</span>
+            <span id="panel-total-price" style="font-size:1.25rem;font-weight:900;color:var(--mf-vine-dark);">19.90€</span>
+          </div>
+          <div style="display:grid;grid-template-columns:auto 1fr;gap:8px;">
+            <button id="btn-clear-stand" class="stage-btn" style="background:#FEE2E2;color:#DC2626;border-color:#FECACA;">🗑️ Vaciar</button>
+            <button id="btn-add-woo" class="stage-btn primary" style="justify-content:center;">🛒 Añadir Pack al Carrito</button>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       2. EN SEGUNDO LUGAR: CATÁLOGO DE ARTÍCULOS CON FILTROS Y CARGAR MÁS (+8)
+       ========================================================================== -->
+  <section id="catalogo-tienda" class="catalog-section" aria-label="Catálogo completo de artículos MiniFauna">
+    <div class="section-header-row">
+      <div>
+        <span class="pill-tag pill-sprout" style="margin-bottom:8px;">🌿 Colección Oficial Sincronizada con WooCommerce</span>
+        <h2 class="section-title">Explora todo el <span class="text-gradient">Catálogo MiniFauna</span></h2>
+        <p style="font-size:0.9rem;color:var(--mf-text-muted);margin-top:4px;">
+          Elige figuras articuladas sueltas, escenarios orgánicos 360°, vegetación botánica modular o packs ahorro completos.
+        </p>
+      </div>
+      <div style="font-size:0.84rem;font-weight:700;color:var(--mf-text-muted);">
+        Mostrando <strong id="catalog-visible-num" style="color:var(--mf-vine-dark);">8</strong> de <strong id="catalog-total-num" style="color:var(--mf-vine-dark);">28</strong> artículos
+      </div>
+    </div>
+
+    <div class="dept-tabs" role="tablist">
+      <button class="dept-tab active" data-dept="TODOS">🌿 TODOS LOS ARTÍCULOS</button>
+      <button class="dept-tab" data-dept="FIGURAS">🦖 FIGURAS ARTICULADAS</button>
+      <button class="dept-tab" data-dept="HABITATS">🏔️ ESCENARIOS & HÁBITATS</button>
+      <button class="dept-tab" data-dept="EXTRAS">🌴 MINI-HÁBITATS & FLORA</button>
+      <button class="dept-tab" data-dept="PACKS">🌼 PACKS COMPLETOS</button>
+    </div>
+
+    <div class="filters-bar">
+      <div class="filter-group">
+        <span class="filter-label">🌍 Bioma:</span>
+        <select id="filter-biome" class="filter-select" aria-label="Filtrar por bioma">
+          <option value="TODOS">Todos los Biomas</option>
+          <option value="Valle Cretácico">🌋 Valle Cretácico (Dinos)</option>
+          <option value="Sabana Africana">🦁 Sabana del Serengueti</option>
+          <option value="Selva Amazónica">🦜 Selva Amazónica</option>
+          <option value="Dunas del Sáhara">🐪 Dunas del Sáhara</option>
+          <option value="Cumbres Alpinas">🐻 Cumbres Alpinas</option>
+          <option value="Glaciar Ártico">🐻‍❄️ Glaciar Ártico</option>
+        </select>
+
+        <span class="filter-label">🔍 Buscar:</span>
+        <input type="search" id="filter-search" class="filter-search" placeholder="Ej: Triceratops, Oasis, León..." aria-label="Buscar producto" />
+
+        <label class="check-label">
+          <input type="checkbox" id="filter-flexi" />
+          <span>🦖 Articulado Flexi</span>
+        </label>
+
+        <label class="check-label">
+          <input type="checkbox" id="filter-featured" />
+          <span>🌼 Top Ventas</span>
+        </label>
+
+        <button type="button" id="btn-reset-filters" class="sel-btn" style="padding:8px 12px;border-radius:10px;">
+          ↺ Limpiar filtros
+        </button>
+      </div>
+
+      <div class="filter-group">
+        <span class="filter-label">Ordenar:</span>
+        <select id="filter-sort" class="filter-select" aria-label="Ordenar artículos">
+          <option value="featured">Destacados</option>
+          <option value="price-asc">Precio: menor a mayor</option>
+          <option value="price-desc">Precio: mayor a menor</option>
+          <option value="rating">Mejor valorados ★</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="shop-products-grid" class="products-grid"></div>
+
+    <div class="load-more-wrap">
+      <button id="btn-load-more" class="load-more-btn">
+        <span>🌱 Cargar más artículos</span>
+        <span id="load-more-badge" style="background:rgba(255,255,255,0.25);padding:2px 10px;border-radius:999px;font-size:0.78rem;">+8</span>
+      </button>
+      <p id="load-more-status" style="font-size:0.8rem;color:var(--mf-text-muted);font-weight:700;"></p>
+    </div>
+  </section>
+
+
+
+  <!-- ==========================================================================
+       3. PREGUNTAS FRECUENTES (FAQ RETRAÍDAS) Y CONTACTO / ENCARGOS A MEDIDA
+       ========================================================================== -->
+  <section id="preguntas-frecuentes" class="info-section">
+    <div>
+      <span class="pill-tag pill-orchid">🌸 Dudas Resueltas</span>
+      <h2 class="section-title" style="margin-top:8px;">Preguntas <span class="text-gradient">Frecuentes</span></h2>
+      <p style="font-size:0.86rem;color:var(--mf-text-muted);margin-top:4px;">
+        Haz clic en cualquier pregunta para desplegar los detalles sobre materiales, envíos e integración con tus pedidos.
+      </p>
+
+      <div class="faq-list">
+        <div class="faq-item">
+          <button class="faq-question">
+            <span>¿De qué material están fabricadas las figuras MiniFauna y los hábitats?</span>
+            <span>＋</span>
+          </button>
+          <div class="faq-answer">
+            Todas nuestras figuras articuladas y bases de hábitat se realizan mediante impresión 3D multicolor de alta precisión en <strong>PLA de origen vegetal (almidón de maíz)</strong>, 100% libre de tóxicos, resistente y con un tacto satinado mate idéntico al estilo del logotipo.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question">
+            <span>¿Las piezas que coloco en el configurador 3D coinciden con el pedido real?</span>
+            <span>＋</span>
+          </button>
+          <div class="faq-answer">
+            ¡Sí! Cuando personalizas un hábitat en la bola del mundo y pulsas <em>"Añadir Pack al Carrito"</em>, nuestro sistema registra exactamente el escenario base elegido, cada figura articulada y cada extra como líneas vinculadas a tu carrito de WooCommerce.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question">
+            <span>¿Puedo pedir un hábitat personalizado o subir mi propio diseño 3D?</span>
+            <span>＋</span>
+          </button>
+          <div class="faq-answer">
+            Por supuesto. En el configurador puedes usar el botón <strong>"📂 Cargar .GLB/.STL"</strong> para previsualizar bases personalizadas sobre el escenario con 8 puntos de colocación activos, o escribirnos en el formulario adjunto.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question">
+            <span>¿Cuáles son los plazos de envío y condiciones de devolución?</span>
+            <span>＋</span>
+          </button>
+          <div class="faq-answer">
+            Los pedidos se envían desde Valencia en <strong>24/72 horas laborales</strong> con embalaje ecológico protegido. Dispones de <strong>14 días naturales de derecho de desistimiento</strong> en catálogo estándar conforme a la normativa europea de defensa del consumidor.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="contacto" class="contact-card">
+      <span class="pill-tag pill-papaya" style="align-self:flex-start;">🌼 Atención Directa</span>
+      <h3 style="font-size:1.35rem;">¿Quieres un Hábitat o Figura a medida?</h3>
+      <p style="font-size:0.82rem;color:var(--mf-text-muted);">
+        Escríbenos para combinaciones especiales de colores, packs para regalos o colegios. Respuesta en menos de 24h.
+      </p>
+      <form id="contact-form" style="display:flex;flex-direction:column;gap:10px;">
+        <input type="text" class="form-input" placeholder="Tu nombre" required />
+        <input type="email" class="form-input" placeholder="Tu correo electrónico" required />
+        <textarea class="form-input" rows="3" placeholder="Cuéntanos qué bioma o animal te gustaría personalizar..." required></textarea>
+        <label style="font-size:0.74rem;color:var(--mf-text-muted);display:flex;gap:8px;align-items:flex-start;cursor:pointer;">
+          <input type="checkbox" required style="margin-top:3px;" />
+          <span>He leído y acepto la <button type="button" class="legal-link-btn" style="color:var(--mf-lagoon);" data-open-legal="privacidad">Política de Privacidad (RGPD)</button> de Martenscrap.</span>
+        </label>
+        <div style="font-size:0.69rem;color:var(--mf-text-muted);background:var(--mf-bg-tint);padding:8px 12px;border-radius:10px;line-height:1.4;">
+          <strong>1ª Capa Informativa RGPD (AEPD):</strong> <strong>Responsable:</strong> Marta Pastor Escribano (Martenscrap) · <strong>Finalidad:</strong> Gestionar tu consulta o presupuesto de hábitat 3D · <strong>Legitimación:</strong> Consentimiento del interesado (Art. 6.1.a RGPD) · <strong>Derechos:</strong> Acceso, rectificación y supresión en <em>hola@martenscrap.com</em>.
+        </div>
+        <button type="submit" class="load-more-btn" style="justify-content:center;width:100%;padding:12px;">
+          🌿 Enviar Consulta
+        </button>
+      </form>
+    </div>
+  </section>
+
+  <!-- ==========================================================================
+       4. FOOTER BOTÁNICO CON DATOS DEL CREADOR Y NORMATIVA RGPD / LSSI-CE
+       ========================================================================== -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="guarantees-grid">
+        <div class="guarantee-box">
+          <span style="font-size:28px;">🌿</span>
+          <div>
+            <h4 style="font-size:0.82rem;color:white;text-transform:uppercase;">Diseño Propio & Bio-PLA</h4>
+            <p style="font-size:0.76rem;color:#A7C4B5;">Figuras articuladas y escenarios botánicos cuidados al detalle con bioplástico vegetal.</p>
+          </div>
+        </div>
+        <div class="guarantee-box">
+          <span style="font-size:28px;">📦</span>
+          <div>
+            <h4 style="font-size:0.82rem;color:white;text-transform:uppercase;">Envíos Cuidados 24/72h</h4>
+            <p style="font-size:0.76rem;color:#A7C4B5;">Embalaje libre de plástico con detalles coleccionables desde Valencia.</p>
+          </div>
+        </div>
+        <div class="guarantee-box">
+          <span style="font-size:28px;">🛡️</span>
+          <div>
+            <h4 style="font-size:0.82rem;color:white;text-transform:uppercase;">Pago 100% Seguro WooCommerce</h4>
+            <p style="font-size:0.76rem;color:#A7C4B5;">Transacciones cifradas con Bizum, Tarjeta y PayPal. Garantía legal de 3 años.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-cols">
+        <div>
+          <img src="/logo-minifauna.png" alt="MiniFauna" style="height:56px;width:auto;background:rgba(255,255,255,0.92);padding:6px 14px;border-radius:16px;margin-bottom:10px;" />
+          <p style="font-size:0.72rem;font-weight:800;color:var(--mf-lime);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">
+            Martenscrap • Marta Pastor Escribano
+          </p>
+          <p style="font-size:0.8rem;color:#A7C4B5;max-width:340px;">
+            Colección interactiva de figuras 3D articuladas, dioramas orgánicos por biomas, marcapáginas magnéticos y regalos originales.
+          </p>
+        </div>
+
+        <div>
+          <h4 style="color:white;font-size:0.8rem;text-transform:uppercase;margin-bottom:10px;">Biomas 3D</h4>
+          <ul style="list-style:none;font-size:0.78rem;display:flex;flex-direction:column;gap:6px;color:#D8EAE2;">
+            <li>🌋 Isla Volcánica Cretácica</li>
+            <li>🦁 Sabana del Serengueti</li>
+            <li>🦜 Selva Fluvial Amazónica</li>
+            <li>🐪 Erg de Dunas del Sáhara</li>
+            <li>🐻 Cumbres Alpinas y Cascada</li>
+            <li>🐻‍❄️ Glaciar y Banquisa Ártica</li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 style="color:white;font-size:0.8rem;text-transform:uppercase;margin-bottom:10px;">Puntos de Venta</h4>
+          <ul style="list-style:none;font-size:0.78rem;display:flex;flex-direction:column;gap:6px;color:#D8EAE2;">
+            <li>📍 Valencia (Quart, Benicalap, C.C.)</li>
+            <li>📍 Pontevedra (Gondomar)</li>
+            <li>📍 Tarragona (Reus)</li>
+            <li>📍 Málaga Centro</li>
+            <li>📍 Santa Cruz de Tenerife</li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 style="color:white;font-size:0.8rem;text-transform:uppercase;margin-bottom:10px;">Contacto Oficial</h4>
+          <ul style="list-style:none;font-size:0.78rem;display:flex;flex-direction:column;gap:6px;color:#D8EAE2;">
+            <li>✉️ hola@martenscrap.com</li>
+            <li>📸 @martenscrap (Instagram & TikTok)</li>
+            <li>🏛️ Valencia, España</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div>© 2026 MiniFauna by Martenscrap • Marta Pastor Escribano. Todos los derechos reservados.</div>
+        <div class="legal-links">
+          <button class="legal-link-btn" data-open-legal="aviso">Aviso Legal (LSSI-CE)</button>
+          <button class="legal-link-btn" data-open-legal="privacidad">Política de Privacidad (RGPD)</button>
+          <button class="legal-link-btn" data-open-legal="cookies">Política de Cookies</button>
+          <button class="legal-link-btn" data-open-legal="terminos">Términos y Desistimiento 14D</button>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- DRAWER DE FAVORITOS (WISHLIST) -->
+  <div id="wishlist-drawer-backdrop" class="drawer-backdrop" role="dialog" aria-modal="true" aria-label="Lista de favoritos">
+    <div class="cart-drawer">
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:14px;border-bottom:2px solid var(--mf-border);">
+          <h3 style="font-size:1.2rem;display:flex;align-items:center;gap:8px;">🌸 Tus Favoritos MiniFauna</h3>
+          <button id="close-wishlist-btn" class="icon-btn" style="min-width:36px;min-height:36px;">✕</button>
+        </div>
+        <p style="font-size:0.78rem;color:var(--mf-text-muted);margin-top:10px;">
+          Piezas y hábitats que has guardado para tu colección. Puedes añadirlos a tu cesta o probarlos en el visor 3D.
+        </p>
+        <div id="wishlist-items-container" style="margin-top:14px;display:flex;flex-direction:column;gap:10px;max-height:65vh;overflow-y:auto;padding-right:4px;"></div>
+      </div>
+
+      <div style="border-top:2px solid var(--mf-border);padding-top:14px;display:flex;gap:8px;">
+        <button id="btn-add-all-wishlist" class="load-more-btn" style="width:100%;justify-content:center;padding:12px;">
+          🛒 Añadir Todos al Carrito
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DRAWER DEL CARRITO WOOCOMMERCE -->
+  <div id="cart-drawer-backdrop" class="drawer-backdrop" role="dialog" aria-modal="true" aria-label="Carrito de compra">
+    <div class="cart-drawer">
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:14px;border-bottom:2px solid var(--mf-border);">
+          <h3 style="font-size:1.2rem;">🛒 Tu Cesta WooCommerce</h3>
+          <button id="close-cart-btn" class="icon-btn" style="min-width:36px;min-height:36px;">✕</button>
+        </div>
+        <div id="cart-items-container" style="margin-top:16px;display:flex;flex-direction:column;gap:10px;max-height:62vh;overflow-y:auto;"></div>
+      </div>
+
+      <div style="border-top:2px solid var(--mf-border);padding-top:14px;display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;justify-content:space-between;font-size:1.1rem;font-weight:900;">
+          <span>Total Pedido:</span>
+          <span id="drawer-total-price">19.90€</span>
+        </div>
+        <button id="btn-checkout-woo" class="load-more-btn" style="width:100%;justify-content:center;">
+          🔒 Tramitar Pedido en WooCommerce
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL LEGAL COMPLETO -->
+  <div id="legal-modal-backdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="legal-modal-title">
+    <div class="legal-modal">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <span class="pill-tag pill-lagoon">⚖️ Cumplimiento Normativo LSSI-CE & RGPD</span>
+          <h3 id="legal-modal-title" style="font-size:1.35rem;margin-top:4px;">Información Legal y Protección de Datos</h3>
+        </div>
+        <button id="close-legal-btn" class="icon-btn">✕</button>
+      </div>
+
+      <div class="legal-tabs">
+        <button class="legal-tab-btn active" data-ltab="aviso">Aviso Legal (LSSI-CE)</button>
+        <button class="legal-tab-btn" data-ltab="privacidad">Política de Privacidad (RGPD)</button>
+        <button class="legal-tab-btn" data-ltab="cookies">Política de Cookies</button>
+        <button class="legal-tab-btn" data-ltab="terminos">Condiciones & Desistimiento 14D</button>
+      </div>
+
+      <div id="legal-content-body" class="legal-body"></div>
+    </div>
+  </div>
+
+  <!-- BANNER DE PROTECCIÓN DE DATOS Y COOKIES TÉCNICAS -->
+  <div id="cookie-banner" class="cookie-banner">
+    <div style="font-size:0.78rem;color:var(--mf-text-main);">
+      🌿 <strong>Privacidad y Cookies Técnicas (RGPD):</strong> Utilizamos almacenamiento local exclusivamente técnico para conservar tu configuración de hábitat 3D y tu cesta de WooCommerce, sin rastreadores publicitarios de terceros.
+      <button class="legal-link-btn" style="color:var(--mf-lagoon);" data-open-legal="privacidad">Ver Política de Datos</button>.
+    </div>
+    <button id="accept-cookies-btn" class="stage-btn primary" style="white-space:nowrap;">Aceptar</button>
+  </div>
+
+  <div id="woo-toast" class="toast"></div>
+
+  <script type="module" src="./app.js?v=clayLetters4"></script>
+</body>
+</html>
