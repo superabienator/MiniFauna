@@ -993,7 +993,53 @@ const continentLetterColliders = [];
 const letterRaycaster = new THREE.Raycaster();
 const letterRayMouse = new THREE.Vector2();
 
-function createClayLetterTexture(char) {
+// Paletas armónicas de alto contraste por continente (degradado saturado + doble borde nítido)
+const CONTINENT_PALETTES = {
+  europa: {
+    top: '#BE185D',     // Rosa frambuesa intenso
+    bottom: '#FB7185',  // Coral cálido
+    contour: '#881337', // Filo oscuro frambuesa
+    bevel: '#FFFDF7'    // Bisel blanco crema
+  },
+  asia: {
+    top: '#4C1D95',     // Púrpura amatista profundo
+    bottom: '#7C3AED',  // Índigo / Violeta vivo
+    contour: '#2E1065', // Filo oscuro amatista
+    bevel: '#FFFDF7'
+  },
+  africa: {
+    top: '#9A3412',     // Naranja terracota / ámbar intenso
+    bottom: '#D97706',  // Ocre tostado vivo
+    contour: '#7C2D12', // Filo oscuro terracota
+    bevel: '#FFFDF7'
+  },
+  norteamerica: {
+    top: '#14532D',     // Verde bosque profundo
+    bottom: '#16A34A',  // Verde esmeralda intenso
+    contour: '#052E16', // Filo oscuro bosque
+    bevel: '#FFFDF7'
+  },
+  sudamerica: {
+    top: '#064E3B',     // Verde selva profundo
+    bottom: '#0D9488',  // Turquesa / cerceta vivo
+    contour: '#022C22', // Filo oscuro selva
+    bevel: '#FFFDF7'
+  },
+  oceania: {
+    top: '#991B1B',     // Terracota / coral tostado intenso
+    bottom: '#EA580C',  // Naranja quemado vivo
+    contour: '#7F1D1D', // Filo oscuro coral
+    bevel: '#FFFDF7'
+  },
+  polos: {
+    top: '#0369A1',     // Azul glacial intenso
+    bottom: '#0284C7',  // Cian profundo
+    contour: '#082F49', // Filo oscuro azul marino
+    bevel: '#F0F9FF'    // Bisel blanco nieve
+  }
+};
+
+function createClayLetterTexture(char, palette) {
   const size = 256;
   const canvas = document.createElement('canvas');
   canvas.width = size;
@@ -1002,58 +1048,60 @@ function createClayLetterTexture(char) {
 
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.font = '700 150px "Fredoka", "Plus Jakarta Sans", sans-serif';
+  ctx.font = '700 138px "Fredoka", "Plus Jakarta Sans", sans-serif';
 
   const cx = size * 0.5;
   const cy = size * 0.5;
 
   // 1. Sombra suave de contacto
   ctx.save();
-  ctx.shadowColor = 'rgba(12, 28, 55, 0.38)';
-  ctx.shadowBlur = 12;
+  ctx.shadowColor = 'rgba(8, 22, 48, 0.40)';
+  ctx.shadowBlur = 10;
   ctx.shadowOffsetX = 3;
-  ctx.shadowOffsetY = 7;
-  ctx.fillStyle = '#C8BAA0';
-  ctx.fillText(char, cx, cy + 3);
+  ctx.shadowOffsetY = 6;
+  ctx.fillStyle = palette.contour;
+  ctx.fillText(char, cx, cy + 2);
   ctx.restore();
 
-  // 2. Extrusión redondeada de plastilina (borde color crema cálido/beige)
+  // 2. Filo exterior oscuro sutil (tono sombra del continente para recortar sobre terreno pastel)
   ctx.lineJoin = 'round';
   ctx.lineCap = 'round';
-  ctx.lineWidth = 24;
-  ctx.strokeStyle = '#DDD1BC';
-  ctx.strokeText(char, cx, cy + 2);
-  ctx.fillStyle = '#DDD1BC';
-  ctx.fillText(char, cx, cy + 2);
+  ctx.lineWidth = 15;
+  ctx.strokeStyle = palette.contour;
+  ctx.strokeText(char, cx, cy + 1);
 
-  // 3. Cuerpo principal en blanco cálido/crema mate de juguete de vinilo
-  ctx.lineWidth = 12;
-  ctx.strokeStyle = '#FFFDF7';
+  // 3. Bisel exterior de plastilina en blanco crema (manteniendo huecos internos bien abiertos)
+  ctx.lineWidth = 8;
+  ctx.strokeStyle = palette.bevel;
   ctx.strokeText(char, cx, cy);
-  ctx.fillStyle = '#FFFDF7';
+
+  // 4. Cara frontal con degradado saturado, vivo y armónico con el territorio
+  const grad = ctx.createLinearGradient(0, cy - 50, 0, cy + 50);
+  grad.addColorStop(0.0, palette.top);
+  grad.addColorStop(1.0, palette.bottom);
+
+  ctx.fillStyle = grad;
   ctx.fillText(char, cx, cy);
 
-  // 4. Brillo biselado acolchado superior-izquierdo
-  ctx.lineWidth = 4;
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
-  ctx.strokeText(char, cx - 2, cy - 3);
+  // 5. Perfilado interior sutil para que los huecos ("o", "a", "p", "e", "d") no se empasten
+  ctx.lineWidth = 2.0;
+  ctx.strokeStyle = palette.contour;
+  ctx.globalAlpha = 0.5;
+  ctx.strokeText(char, cx, cy);
+  ctx.globalAlpha = 1.0;
 
-  // 5. Acabado táctil mate sutil
-  for (let i = 0; i < 35; i++) {
-    const rx = cx + (Math.random() - 0.5) * 110;
-    const ry = cy + (Math.random() - 0.5) * 110;
-    ctx.fillStyle = i % 2 === 0 ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.03)';
-    ctx.beginPath();
-    ctx.arc(rx, ry, 2 + Math.random() * 3, 0, Math.PI * 2);
-    ctx.fill();
-  }
+  // 6. Brillo biselado superior-izquierdo de juguete soft-touch
+  ctx.save();
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
+  ctx.fillText(char, cx - 1.5, cy - 2.5);
+  ctx.restore();
 
   const tex = new THREE.CanvasTexture(canvas);
   tex.colorSpace = THREE.SRGBColorSpace;
   return { canvas, tex };
 }
 
-function createCurvedLetterGeometry(w = 0.34, h = 0.34) {
+function createCurvedLetterGeometry(w = 0.28, h = 0.28) {
   const geom = new THREE.PlaneGeometry(w, h, 6, 6);
   const pos = geom.attributes.position;
   // Curvar la placa para que se adhiera físicamente a la curvatura esférica de la Tierra
@@ -1067,28 +1115,88 @@ function createCurvedLetterGeometry(w = 0.34, h = 0.34) {
   return geom;
 }
 
+// Configuración de palabras centradas exactamente en el centroide de cada masa terrestre
+// Tracking reducido 35-40% para palabras compactas y cohesionadas con margen amplio sobre las costas
 const CONTINENT_WORDS_DATA = [
-  { text: 'América',    lat: 10.0,  lon: -73.0, rot: -0.32, charSpacing: 4.8 },
-  { text: 'Europa',     lat: 51.5,  lon: 16.0,  rot: -0.06, charSpacing: 4.6 },
-  { text: 'África',     lat: 7.0,   lon: 21.0,  rot: 0.0,   charSpacing: 4.8 },
-  { text: 'Asia',       lat: 46.0,  lon: 90.0,  rot: 0.05,  charSpacing: 5.2 },
-  { text: 'Oceanía',    lat: -24.5, lon: 134.5, rot: -0.05, charSpacing: 4.6 },
-  { text: 'Polo Norte', lat: 82.5,  lon: -25.0, rot: 0.0,   charSpacing: 4.0 },
-  { text: 'Polo Sur',   lat: -82.5, lon: 25.0,  rot: 0.0,   charSpacing: 4.0 }
+  {
+    text: 'Norteamérica',
+    paletteKey: 'norteamerica',
+    lat: 42.5,
+    lon: -100.0,
+    rot: -0.06,
+    charSpacing: 2.3
+  },
+  {
+    text: 'Sudamérica',
+    paletteKey: 'sudamerica',
+    lat: -14.0,
+    lon: -58.0,
+    rot: 0.12,
+    charSpacing: 2.4
+  },
+  {
+    text: 'Europa',
+    paletteKey: 'europa',
+    lat: 51.5,
+    lon: 16.0,
+    rot: -0.05,
+    charSpacing: 2.5
+  },
+  {
+    text: 'África',
+    paletteKey: 'africa',
+    lat: 7.0,
+    lon: 21.0,
+    rot: 0.0,
+    charSpacing: 2.7
+  },
+  {
+    text: 'Asia',
+    paletteKey: 'asia',
+    lat: 46.0,
+    lon: 90.0,
+    rot: 0.04,
+    charSpacing: 2.8
+  },
+  {
+    text: 'Oceanía',
+    paletteKey: 'oceania',
+    lat: -24.5,
+    lon: 134.5,
+    rot: -0.05,
+    charSpacing: 2.5
+  },
+  {
+    text: 'Polo Norte',
+    paletteKey: 'polos',
+    lat: 83.5,
+    lon: -20.0,
+    rot: 0.0,
+    charSpacing: 2.2
+  },
+  {
+    text: 'Polo Sur',
+    paletteKey: 'polos',
+    lat: -83.5,
+    lon: 20.0,
+    rot: 0.0,
+    charSpacing: 2.2
+  }
 ];
 
 CONTINENT_WORDS_DATA.forEach((wordDef) => {
+  const palette = CONTINENT_PALETTES[wordDef.paletteKey];
   const chars = wordDef.text.split('');
   const totalChars = chars.length;
   const wordSiblings = [];
 
   chars.forEach((char, idx) => {
-    if (char === ' ') return; // Espacio sin mesh
+    if (char === ' ') return; // Espacio entre palabras sin malla
 
     const letterGroup = new THREE.Group();
     continentLettersRootGroup.add(letterGroup);
 
-    // Calcular la posición angular sobre el arco del globo
+    // Algoritmo de centrado simétrico en la masa de tierra (text-anchor: center)
     const offset = idx - (totalChars - 1) * 0.5;
     const radLat = (wordDef.lat * Math.PI) / 180;
     const cosLat = Math.max(Math.cos(radLat), 0.18);
@@ -1119,9 +1227,9 @@ CONTINENT_WORDS_DATA.forEach((wordDef) => {
     const rotMatrix = new THREE.Matrix4().makeBasis(right, up, normal);
     letterGroup.quaternion.setFromRotationMatrix(rotMatrix);
 
-    // Malla física 3D de la letra
-    const { tex } = createClayLetterTexture(char);
-    const curvedGeom = createCurvedLetterGeometry(0.36, 0.36);
+    // Malla física 3D de la letra con cara frontal y bisel en materiales definidos
+    const { tex } = createClayLetterTexture(char, palette);
+    const curvedGeom = createCurvedLetterGeometry(0.28, 0.28);
 
     const letterMat = new THREE.MeshStandardMaterial({
       map: tex,
@@ -1136,14 +1244,15 @@ CONTINENT_WORDS_DATA.forEach((wordDef) => {
     letterMesh.castShadow = true;
     letterGroup.add(letterMesh);
 
-    // Colisionador invisible para hover sin cambiar cursor
-    const colliderGeom = new THREE.SphereGeometry(0.22, 6, 6);
+    // Colisionador invisible para hover sin alterar cursor
+    const colliderGeom = new THREE.SphereGeometry(0.20, 6, 6);
     const colliderMat = new THREE.MeshBasicMaterial({ visible: false });
     const colliderMesh = new THREE.Mesh(colliderGeom, colliderMat);
     letterGroup.add(colliderMesh);
 
     const letterEntry = {
       char,
+      palette,
       group: letterGroup,
       mesh: letterMesh,
       scale: letterGroup.scale,
@@ -1211,7 +1320,7 @@ renderer.domElement.addEventListener('pointermove', (e) => {
 if (document.fonts) {
   document.fonts.ready.then(() => {
     continentLettersList.forEach((entry) => {
-      const { tex } = createClayLetterTexture(entry.char);
+      const { tex } = createClayLetterTexture(entry.char, entry.palette);
       entry.mesh.material.map = tex;
       entry.mesh.material.needsUpdate = true;
     });
