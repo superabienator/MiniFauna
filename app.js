@@ -1429,32 +1429,6 @@ HABITATS.forEach((hab) => {
   globeHotspots.push({ hab, anchor, el });
 });
 
-HABITATS.forEach((hab) => {
-  const pos = latLonToVector3(hab.lat, hab.lon, GLOBE_RADIUS * 1.028);
-  const anchor = new THREE.Object3D();
-  anchor.position.copy(pos);
-  globeGroup.add(anchor);
-
-  const pinMesh = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.09, 0.03, 0.18, 16),
-    toyMaterial(hab.dotColor, 0.35)
-  );
-  pinMesh.lookAt(pos.clone().multiplyScalar(2));
-  pinMesh.rotateX(Math.PI / 2);
-  anchor.add(pinMesh);
-
-  const el = document.createElement('div');
-  el.className = 'hotspot';
-  el.innerHTML = `
-    <span class="hotspot-dot" style="background:${hab.dotColor}; color:${hab.dotColor}">${hab.icon}</span>
-    <span>${escapeHtml(hab.name)}</span>
-  `;
-  el.addEventListener('click', () => enterHabitatMode(hab));
-  hotspotLayer.appendChild(el);
-
-  globeHotspots.push({ hab, anchor, el });
-});
-
 // ============================================================================
 // 4. ESCENARIOS ORGÁNICOS 360° Y PUNTOS DE ANCLAJE (SLOTS 1..8)
 // ============================================================================
@@ -2196,6 +2170,11 @@ const gltfLoader = new GLTFLoader();
 const stlLoader = new STLLoader();
 
 document.getElementById('artisan-file-input').addEventListener('change', (e) => {
+  if (!IS_ADMIN_MODE) {
+    showToast('🔒 La subida de modelos 3D externos está reservada a administradores.');
+    e.target.value = '';
+    return;
+  }
   const file = e.target.files[0];
   if (!file) return;
 
