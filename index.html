@@ -9,6 +9,8 @@
   <meta name="description" content="MiniFauna — Explora nuestro globo terráqueo interactivo 3D, personaliza tu hábitat con figuras articuladas y descubre el catálogo completo compatible con WooCommerce." />
   <title>MiniFauna — Explorador 3D de Hábitats & Tienda Oficial | Martenscrap</title>
   <link rel="icon" type="image/png" href="/favicon-minifauna.png" />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Grand+Hotel&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -246,7 +248,35 @@
       flex-direction: column;
       align-items: center;
       gap: 10px;
+      position: relative;
     }
+
+    /* Nubes de algodón / plastilina decorativas en el cielo exterior de la página (0 WebGL, GPU CSS) */
+    .hero-clay-clouds {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 0;
+    }
+
+    .hero-header > *:not(.hero-clay-clouds) {
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-cloud-item {
+      position: absolute;
+      pointer-events: none;
+      will-change: transform;
+      filter: drop-shadow(0 8px 14px rgba(36, 112, 160, 0.10));
+      animation: clayCloudFloat 9s ease-in-out infinite;
+    }
+
+    .hero-cloud-item.hc-1 { top: 6px; left: 2%; width: 135px; opacity: 0.92; animation-delay: 0s; }
+    .hero-cloud-item.hc-2 { top: 14px; right: 3%; width: 145px; opacity: 0.92; animation-delay: -3.2s; }
+    .hero-cloud-item.hc-3 { bottom: 18px; left: 24%; width: 105px; opacity: 0.78; animation-delay: -5.5s; }
+    .hero-cloud-item.hc-4 { bottom: 14px; right: 23%; width: 112px; opacity: 0.80; animation-delay: -1.8s; }
 
     .hero-pills {
       display: flex;
@@ -407,13 +437,96 @@
       border-radius: 34px;
       overflow: hidden;
       background:
-        radial-gradient(circle at 50% 46%, rgba(255, 255, 255, 0.88) 0%, rgba(224, 242, 254, 0.55) 45%, transparent 72%),
-        linear-gradient(180deg, #D5F5E3 0%, #E0F2FE 52%, #FFFBEB 100%);
+        radial-gradient(circle at 50% 48%, rgba(255, 255, 255, 0.55) 0%, rgba(186, 234, 255, 0.28) 34%, rgba(255, 255, 255, 0) 56%),
+        radial-gradient(circle at 86% 10%, rgba(255, 247, 205, 0.65) 0%, rgba(255, 247, 205, 0) 28%),
+        linear-gradient(180deg, #1E90FF 0%, #3FA9FF 26%, #74C7FF 56%, #B6E4FF 82%, #E8F7FF 100%);
       border: 5px solid #ffffff;
       outline: 2px solid var(--mf-border);
       box-shadow: 0 26px 55px -12px rgba(26, 102, 95, 0.22);
       touch-action: none;
-      transition: background 0.8s ease;
+      transition: background 0.6s ease;
+    }
+
+    /* Capa de Cielo y Nubes de Algodón "Plastilina 3D" (siempre detrás del globo: z-index 1) */
+    .clay-sky-backdrop {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+      overflow: hidden;
+      transition: opacity 0.45s ease;
+    }
+
+    .clay-sky-sun-glow {
+      position: absolute;
+      top: -45px;
+      right: 6%;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 250, 220, 0.85) 0%, rgba(255, 236, 179, 0.38) 42%, rgba(255, 255, 255, 0) 72%);
+      pointer-events: none;
+    }
+
+    .clay-cloud-layer {
+      position: absolute;
+      inset: -40px;
+      pointer-events: none;
+      will-change: transform;
+      transform: translate3d(0, 0, 0);
+    }
+
+    .clay-cloud {
+      position: absolute;
+      pointer-events: none;
+      user-select: none;
+      filter: drop-shadow(0 12px 18px rgba(14, 78, 140, 0.18));
+      animation: clayCloudFloat 7.5s ease-in-out infinite;
+    }
+
+    .clay-cloud.layer-far {
+      filter: drop-shadow(0 8px 14px rgba(14, 78, 140, 0.13));
+      opacity: 0.92;
+    }
+
+    .clay-cloud.layer-halo {
+      filter: drop-shadow(0 14px 22px rgba(12, 68, 128, 0.22));
+    }
+
+    /* Posiciones de Nubes Exteriores (enmarcan el cielo azul sin tapar el globo) */
+    .clay-cloud.cc-tl { top: 8%; left: 4%; width: 230px; animation-delay: 0s; }
+    .clay-cloud.cc-tr { top: 7%; right: 4.5%; width: 245px; animation-delay: -2.4s; }
+    .clay-cloud.cc-ml { top: 43%; left: 2%; width: 215px; animation-delay: -4.1s; }
+    .clay-cloud.cc-mr { top: 41%; right: 2.5%; width: 225px; animation-delay: -1.3s; }
+    .clay-cloud.cc-bl { bottom: 11%; left: 5.5%; width: 240px; animation-delay: -3.5s; }
+    .clay-cloud.cc-br { bottom: 10%; right: 5%; width: 235px; animation-delay: -5.2s; }
+
+    /* Nubes lejanas altas/bajas de profundidad */
+    .clay-cloud.cc-far-top { top: 5%; left: 26%; width: 150px; animation-delay: -1.7s; }
+    .clay-cloud.cc-far-top2 { top: 6%; right: 25%; width: 145px; animation-delay: -4.8s; }
+    .clay-cloud.cc-far-bot { bottom: 9%; left: 27%; width: 155px; animation-delay: -2.9s; }
+    .clay-cloud.cc-far-bot2 { bottom: 8%; right: 26%; width: 150px; animation-delay: -6.1s; }
+
+    /* Nubes de Halo del Globo (asoman justo por detrás del horizonte curvo de la Tierra) */
+    .clay-cloud.cc-halo-nw { top: 18%; left: 21%; width: 195px; animation-delay: -0.9s; }
+    .clay-cloud.cc-halo-ne { top: 17%; right: 20%; width: 205px; animation-delay: -3.8s; }
+    .clay-cloud.cc-halo-sw { bottom: 20%; left: 20%; width: 200px; animation-delay: -2.1s; }
+    .clay-cloud.cc-halo-se { bottom: 19%; right: 20%; width: 195px; animation-delay: -4.6s; }
+
+    @keyframes clayCloudFloat {
+      0%, 100% { transform: translate3d(0, 0px, 0) scale(1); }
+      50% { transform: translate3d(0, -7px, 0) scale(1.018); }
+    }
+
+    @media (max-width: 768px) {
+      .clay-cloud.cc-tl, .clay-cloud.cc-tr { width: 145px; }
+      .clay-cloud.cc-ml, .clay-cloud.cc-mr { width: 130px; }
+      .clay-cloud.cc-bl, .clay-cloud.cc-br { width: 150px; }
+      .clay-cloud.cc-halo-nw, .clay-cloud.cc-halo-ne,
+      .clay-cloud.cc-halo-sw, .clay-cloud.cc-halo-se { width: 125px; }
+      .clay-cloud.cc-far-top, .clay-cloud.cc-far-top2,
+      .clay-cloud.cc-far-bot, .clay-cloud.cc-far-bot2 { display: none; }
+      .hero-cloud-item.hc-3, .hero-cloud-item.hc-4 { display: none; }
     }
 
     #canvas-container {
@@ -421,6 +534,7 @@
       inset: 0;
       width: 100%;
       height: 100%;
+      z-index: 2;
     }
 
     #hotspot-layer {
@@ -2881,8 +2995,73 @@
     </div>
   </nav>
 
+  <!-- DEFINICIONES SVG COMPARTIDAS: NUBES DE ALGODÓN "PLASTILINA 3D" (0 KB RED, 0 COSTE WEBGL) -->
+  <svg width="0" height="0" style="position:absolute;width:0;height:0;overflow:hidden;" aria-hidden="true">
+    <defs>
+      <!-- Sombreado esférico tipo plastilina blanca satinada para cada pompón de algodón -->
+      <radialGradient id="mf-clay-puff" cx="38%" cy="30%" r="65%" fx="32%" fy="24%">
+        <stop offset="0%" stop-color="#FFFFFF" />
+        <stop offset="48%" stop-color="#FDFEFF" />
+        <stop offset="76%" stop-color="#EFF7FF" />
+        <stop offset="92%" stop-color="#D8ECFF" />
+        <stop offset="100%" stop-color="#C4E0FA" />
+      </radialGradient>
+      <!-- Bisel inferior suave con rebote cálido pastel (efecto juguete/plastilina) -->
+      <linearGradient id="mf-clay-base" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stop-color="#FFFFFF" />
+        <stop offset="62%" stop-color="#F5FAFF" />
+        <stop offset="88%" stop-color="#DCEEFF" />
+        <stop offset="100%" stop-color="#C5E0FA" />
+      </linearGradient>
+
+      <!-- Modelo A: Gran Cúmulo Esponjoso de Plastilina (7 pompones + base redondeada) -->
+      <symbol id="mf-clay-cloud-a" viewBox="0 0 260 145">
+        <rect x="26" y="72" width="208" height="54" rx="27" fill="url(#mf-clay-base)" />
+        <circle cx="56" cy="86" r="34" fill="url(#mf-clay-puff)" />
+        <circle cx="202" cy="88" r="32" fill="url(#mf-clay-puff)" />
+        <circle cx="96" cy="58" r="42" fill="url(#mf-clay-puff)" />
+        <circle cx="158" cy="62" r="38" fill="url(#mf-clay-puff)" />
+        <circle cx="128" cy="48" r="44" fill="url(#mf-clay-puff)" />
+        <circle cx="78" cy="84" r="35" fill="url(#mf-clay-puff)" />
+        <circle cx="172" cy="84" r="35" fill="url(#mf-clay-puff)" />
+        <ellipse cx="130" cy="96" rx="92" ry="26" fill="url(#mf-clay-base)" />
+        <ellipse cx="114" cy="34" rx="22" ry="9" transform="rotate(-10 114 34)" fill="rgba(255,255,255,0.85)" />
+      </symbol>
+
+      <!-- Modelo B: Nube Redondita de Algodón (5 pompones rechonchos) -->
+      <symbol id="mf-clay-cloud-b" viewBox="0 0 220 135">
+        <rect x="24" y="68" width="172" height="50" rx="25" fill="url(#mf-clay-base)" />
+        <circle cx="58" cy="82" r="33" fill="url(#mf-clay-puff)" />
+        <circle cx="162" cy="82" r="33" fill="url(#mf-clay-puff)" />
+        <circle cx="94" cy="56" r="38" fill="url(#mf-clay-puff)" />
+        <circle cx="136" cy="60" r="35" fill="url(#mf-clay-puff)" />
+        <circle cx="112" cy="50" r="40" fill="url(#mf-clay-puff)" />
+        <ellipse cx="110" cy="92" rx="76" ry="24" fill="url(#mf-clay-base)" />
+        <ellipse cx="98" cy="34" rx="18" ry="8" transform="rotate(-12 98 34)" fill="rgba(255,255,255,0.85)" />
+      </symbol>
+
+      <!-- Modelo C: Nube Alargada "Oruga de Algodón" -->
+      <symbol id="mf-clay-cloud-c" viewBox="0 0 290 135">
+        <rect x="22" y="70" width="246" height="48" rx="24" fill="url(#mf-clay-base)" />
+        <circle cx="52" cy="84" r="30" fill="url(#mf-clay-puff)" />
+        <circle cx="238" cy="84" r="30" fill="url(#mf-clay-puff)" />
+        <circle cx="92" cy="66" r="38" fill="url(#mf-clay-puff)" />
+        <circle cx="196" cy="68" r="36" fill="url(#mf-clay-puff)" />
+        <circle cx="144" cy="54" r="44" fill="url(#mf-clay-puff)" />
+        <ellipse cx="145" cy="94" rx="108" ry="23" fill="url(#mf-clay-base)" />
+        <ellipse cx="132" cy="34" rx="22" ry="8" transform="rotate(-8 132 34)" fill="rgba(255,255,255,0.85)" />
+      </symbol>
+    </defs>
+  </svg>
+
   <!-- CABECERA HERO CON EL LOGOTIPO OFICIAL DE LIANAS Y TURQUESA TALLADO -->
   <header id="top" class="hero-header">
+    <div class="hero-clay-clouds" aria-hidden="true">
+      <svg class="hero-cloud-item hc-1" viewBox="0 0 260 145"><use href="#mf-clay-cloud-a" /></svg>
+      <svg class="hero-cloud-item hc-2" viewBox="0 0 290 135"><use href="#mf-clay-cloud-c" /></svg>
+      <svg class="hero-cloud-item hc-3" viewBox="0 0 220 135"><use href="#mf-clay-cloud-b" /></svg>
+      <svg class="hero-cloud-item hc-4" viewBox="0 0 220 135"><use href="#mf-clay-cloud-b" /></svg>
+    </div>
     <div class="hero-pills">
       <span class="pill-tag pill-sprout">🌿 1º Gira la Bola del Mundo 3D</span>
       <span class="pill-tag pill-lagoon">🏔️ 2º Personaliza tu Hábitat Orgánico</span>
@@ -2944,6 +3123,37 @@
        ========================================================================== -->
   <section id="explorador-3d" class="explorer-section" aria-label="Explorador 3D del Globo y Hábitats">
     <div class="explorer-frame">
+      <!-- Cielo Volumétrico de Plastilina y Nubes de Algodón (Siempre detrás del Globo: z-index 1) -->
+      <div id="clay-sky-backdrop" class="clay-sky-backdrop" aria-hidden="true">
+        <div class="clay-sky-sun-glow"></div>
+
+        <!-- Plano 1: Nubes Lejanas de Profundidad -->
+        <div id="cloud-layer-far" class="clay-cloud-layer">
+          <svg class="clay-cloud layer-far cc-far-top" viewBox="0 0 220 135"><use href="#mf-clay-cloud-b" /></svg>
+          <svg class="clay-cloud layer-far cc-far-top2" viewBox="0 0 290 135"><use href="#mf-clay-cloud-c" /></svg>
+          <svg class="clay-cloud layer-far cc-far-bot" viewBox="0 0 290 135"><use href="#mf-clay-cloud-c" /></svg>
+          <svg class="clay-cloud layer-far cc-far-bot2" viewBox="0 0 220 135"><use href="#mf-clay-cloud-b" /></svg>
+        </div>
+
+        <!-- Plano 2: Halo de Nubes del Globo (asoman tras el horizonte curvo de la Tierra sin cruzar jamás por delante) -->
+        <div id="cloud-layer-halo" class="clay-cloud-layer">
+          <svg class="clay-cloud layer-halo cc-halo-nw" viewBox="0 0 260 145"><use href="#mf-clay-cloud-a" /></svg>
+          <svg class="clay-cloud layer-halo cc-halo-ne" viewBox="0 0 290 135"><use href="#mf-clay-cloud-c" /></svg>
+          <svg class="clay-cloud layer-halo cc-halo-sw" viewBox="0 0 290 135"><use href="#mf-clay-cloud-c" /></svg>
+          <svg class="clay-cloud layer-halo cc-halo-se" viewBox="0 0 260 145"><use href="#mf-clay-cloud-a" /></svg>
+        </div>
+
+        <!-- Plano 3: Grandes Nubes de Algodón en el Exterior del Cielo -->
+        <div id="cloud-layer-mid" class="clay-cloud-layer">
+          <svg class="clay-cloud cc-tl" viewBox="0 0 260 145"><use href="#mf-clay-cloud-a" /></svg>
+          <svg class="clay-cloud cc-tr" viewBox="0 0 290 135"><use href="#mf-clay-cloud-c" /></svg>
+          <svg class="clay-cloud cc-ml" viewBox="0 0 220 135"><use href="#mf-clay-cloud-b" /></svg>
+          <svg class="clay-cloud cc-mr" viewBox="0 0 260 145"><use href="#mf-clay-cloud-a" /></svg>
+          <svg class="clay-cloud cc-bl" viewBox="0 0 290 135"><use href="#mf-clay-cloud-c" /></svg>
+          <svg class="clay-cloud cc-br" viewBox="0 0 220 135"><use href="#mf-clay-cloud-b" /></svg>
+        </div>
+      </div>
+
       <div id="canvas-container"></div>
       <div id="hotspot-layer"></div>
 
@@ -3901,6 +4111,6 @@
 
   <div id="woo-toast" class="toast"></div>
 
-  <script type="module" src="./app.js?v=mobileclean1"></script>
+  <script type="module" src="./app.js?v=clayclouds2"></script>
 </body>
 </html>
