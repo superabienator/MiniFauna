@@ -408,6 +408,11 @@
       box-shadow: var(--mf-clay-bevel), 0 4px 0 var(--mf-papaya-dark), 0 8px 20px rgba(245, 142, 88, 0.35);
     }
 
+    /* Ocultar herramientas internas en modo usuario */
+    .admin-only {
+      display: none !important;
+    }
+
     .camera-controls-bar {
       position: absolute;
       bottom: 18px;
@@ -653,6 +658,29 @@
       transform: translateX(0);
       opacity: 1;
       pointer-events: auto;
+    }
+
+    .sheet-toggle-btn {
+      display: none;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      padding: 2px 0 6px 0;
+      margin: 0 auto;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      width: 100%;
+      color: var(--mf-lagoon-dark);
+      font-size: 0.72rem;
+      font-weight: 800;
+    }
+
+    .sheet-toggle-handle {
+      width: 42px;
+      height: 4px;
+      background: var(--mf-border);
+      border-radius: 999px;
     }
 
     .habitat-header {
@@ -1013,14 +1041,119 @@
     @media (max-width: 768px) {
       .products-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
       .explorer-frame { height: 740px; }
-      .configurator-panel {
-        top: auto;
-        left: 10px;
-        right: 10px;
-        bottom: 10px;
-        width: auto;
-        height: 48%;
+
+      /* Botonera de cámara en pastilla vertical lateral izquierda */
+      .camera-controls-bar {
+        top: 50% !important;
+        bottom: auto !important;
+        left: 8px !important;
+        transform: translateY(-50%) !important;
+        flex-direction: column !important;
+        padding: 6px 5px !important;
+        gap: 5px !important;
+        border-radius: 999px !important;
       }
+      .cam-btn {
+        width: 34px !important;
+        height: 34px !important;
+        font-size: 0.84rem !important;
+      }
+
+      /* Barra de pieza seleccionada ultracompacta superior */
+      .selection-toolbar {
+        top: 56px !important;
+        left: 8px !important;
+        right: 8px !important;
+        min-width: 0 !important;
+        padding: 7px 10px !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        border-radius: 16px !important;
+        gap: 6px !important;
+      }
+      .selection-toolbar .sel-title {
+        font-size: 0.74rem !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        max-width: 130px;
+      }
+      .selection-toolbar .sel-actions {
+        display: flex !important;
+        gap: 4px !important;
+        flex-wrap: nowrap !important;
+      }
+      .selection-toolbar .sel-btn {
+        padding: 5px 8px !important;
+        font-size: 0.72rem !important;
+        min-height: 28px !important;
+        border-radius: 8px !important;
+      }
+
+      /* Configurador como Bottom Sheet plegable/desplegable */
+      .configurator-panel {
+        top: auto !important;
+        left: 8px !important;
+        right: 8px !important;
+        bottom: 8px !important;
+        width: auto !important;
+        max-width: none !important;
+        height: 195px;
+        border-radius: 20px !important;
+        padding: 6px 12px 10px 12px !important;
+        box-shadow: 0 -8px 30px rgba(26, 102, 95, 0.22) !important;
+        transform: translateY(260px) !important;
+        transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), height 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
+      }
+      .configurator-panel.active {
+        transform: translateY(0) !important;
+      }
+      .configurator-panel.expanded {
+        height: 60% !important;
+      }
+      .sheet-toggle-btn {
+        display: flex !important;
+      }
+      .configurator-panel:not(.expanded) .habitat-header,
+      .configurator-panel:not(.expanded) .artisan-base-box {
+        display: none !important;
+      }
+      .configurator-panel.expanded .habitat-header,
+      .configurator-panel.expanded .artisan-base-box {
+        display: block !important;
+      }
+
+      .stage-header {
+        padding: 8px 10px;
+        gap: 6px;
+      }
+      .stage-mode-pill {
+        font-size: 0.72rem;
+        padding: 4px 10px;
+        max-width: 220px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .stage-actions {
+        gap: 4px;
+      }
+      .stage-btn {
+        padding: 6px 10px;
+        font-size: 0.72rem;
+        min-height: 36px;
+      }
+      .globe-hint {
+        bottom: 12px;
+        font-size: 0.68rem;
+        padding: 5px 10px;
+        max-width: calc(100% - 24px);
+      }
+
       .nav-links { display: none; }
     }
 
@@ -1605,7 +1738,7 @@
       <div class="stage-topbar">
         <div class="stage-status-pill">
           <span id="stage-mode-icon">🌍</span>
-          <span id="stage-mode-text">Modo Globo Terráqueo Infantil · 6 Biomas Activos</span>
+          <span id="stage-mode-text">Explora la Tierra · Descubre sus Hábitats y MiniFauna 3D</span>
         </div>
 
         <div class="stage-actions">
@@ -1615,7 +1748,7 @@
           <button id="btn-toggle-slots" class="stage-btn" style="display:none;">
             📍 Puntos del Hábitat (ON)
           </button>
-          <button id="btn-stage-add-pack" class="stage-btn primary">
+          <button id="btn-stage-add-pack" class="stage-btn primary" style="display:none;">
             🛒 Añadir Hábitat Configurado (<span id="stage-pack-price">19.90€</span>)
           </button>
         </div>
@@ -1630,7 +1763,7 @@
           <button id="sel-rotate-left" class="sel-btn">↺ -45°</button>
           <button id="sel-rotate-right" class="sel-btn">↻ +45°</button>
           <button id="sel-scale-up" class="sel-btn">➕ Escala</button>
-          <select id="sel-move-slot" class="sel-btn" title="Mover pieza a otro punto del hábitat" aria-label="Mover a otro punto">
+          <select id="sel-move-slot" class="sel-btn admin-only" title="Mover pieza a otro punto del hábitat" aria-label="Mover a otro punto">
             <option value="">↔ Mover a Punto...</option>
             <option value="0">Punto 1</option>
             <option value="1">Punto 2</option>
@@ -1657,6 +1790,11 @@
       </div>
 
       <aside id="configurator-panel" class="configurator-panel" aria-label="Configurador de Hábitat">
+        <button id="btn-toggle-sheet" class="sheet-toggle-btn" aria-label="Expandir opciones de hábitat">
+          <span class="sheet-toggle-handle"></span>
+          <span class="sheet-toggle-text">Opciones de Terreno y Bioma ▲</span>
+        </button>
+
         <div class="habitat-header">
           <div class="badges-row">
             <span id="habitat-badge" class="habitat-badge">Bioma</span>
@@ -1669,17 +1807,17 @@
         <div class="artisan-base-box">
           <div class="artisan-base-top">
             <span>🏔️ Escenario Base (Modelos):</span>
-            <label class="upload-glb-label">
+            <label class="upload-glb-label admin-only">
               📂 Cargar .GLB/.STL
               <input type="file" id="artisan-file-input" accept=".glb,.gltf,.stl" style="display:none;" />
             </label>
           </div>
           <select id="base-style-select" class="base-select" aria-label="Seleccionar tipo de terreno base">
-            <option value="mountain_waterfall">⛰️ Montañas Rocosas y Cascada Natural (360°)</option>
-            <option value="oasis_dunes">🏝️ Dunas Curvas y Charca Oasis Central (360°)</option>
-            <option value="river_valley">🌊 Valle Fluvial con Río y Colinas (360°)</option>
-            <option value="volcanic_island">🌋 Isla Volcánica / Caldera Natural (360°)</option>
-            <option value="classic_cage">📦 Expositor Clásico con Vallas (Estilo Foto)</option>
+            <option value="mountain_waterfall">⛰️ Montañas Rocosas y Cascada</option>
+            <option value="oasis_dunes">🏝️ Dunas y Charca Oasis</option>
+            <option value="river_valley">🌊 Valle Fluvial con Río</option>
+            <option value="volcanic_island">🌋 Isla Volcánica</option>
+            <option value="classic_cage">📦 Expositor Clásico con Vallas</option>
           </select>
         </div>
 
@@ -2026,6 +2164,6 @@
 
   <div id="woo-toast" class="toast"></div>
 
-  <script type="module" src="./app.js?v=clayLetters5"></script>
+  <script type="module" src="./app.js?v=candypop1"></script>
 </body>
 </html>

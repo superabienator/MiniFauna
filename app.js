@@ -14,6 +14,9 @@ function escapeHtml(str) {
     .replace(/'/g, '&#039;');
 }
 
+// Modo usuario final (oculta herramientas y paneles de depuración internos)
+const IS_ADMIN_MODE = false;
+
 // ============================================================================
 // 1. DATOS DE BIOMAS, CATÁLOGO 3D Y CATÁLOGO COMPLETO DE TIENDA (24 ARTÍCULOS)
 // ============================================================================
@@ -331,8 +334,29 @@ const FULL_SHOP_PRODUCTS = [
 const container = document.getElementById('canvas-container');
 const scene = new THREE.Scene();
 
+const GLOBE_RADIUS = 3.3;
+
+// Cálculo trigonométrico de distancia focal para encuadre completo de la Tierra en cualquier pantalla
+function getIdealGlobeCameraDistance() {
+  const w = (container && container.clientWidth) ? container.clientWidth : window.innerWidth;
+  const h = (container && container.clientHeight) ? container.clientHeight : (window.innerHeight || 670);
+  const aspect = Math.max(w / h, 0.35);
+
+  const vFovRad = (42 * Math.PI) / 180;
+  const halfVFov = vFovRad * 0.5;
+  const halfHFov = Math.atan(Math.tan(halfVFov) * aspect);
+
+  // Margen de seguridad del 25-28% en móvil vertical para evitar recortes laterales
+  const safetyMargin = aspect < 1 ? 1.28 : 1.20;
+  const distV = (GLOBE_RADIUS * safetyMargin) / Math.sin(halfVFov);
+  const distH = (GLOBE_RADIUS * safetyMargin) / Math.sin(halfHFov);
+
+  return Math.max(distV, distH);
+}
+
 const camera = new THREE.PerspectiveCamera(42, container.clientWidth / container.clientHeight, 0.1, 300);
-camera.position.set(0, 2.1, 10.2);
+const initialGlobeDist = getIdealGlobeCameraDistance();
+camera.position.set(0, 2.1 * (initialGlobeDist / 10.2), initialGlobeDist);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
 renderer.setSize(container.clientWidth, container.clientHeight);
@@ -349,7 +373,7 @@ controls.dampingFactor = 0.07;
 controls.rotateSpeed = 0.78;
 controls.zoomSpeed = 1.15;
 controls.minDistance = 4.2;
-controls.maxDistance = 20.0;
+controls.maxDistance = 32.0;
 controls.autoRotate = true;
 controls.autoRotateSpeed = 0.5;
 
@@ -416,7 +440,7 @@ function toyMaterial(hexColor, roughness = 0.7) {
 const globeGroup = new THREE.Group();
 scene.add(globeGroup);
 
-const GLOBE_RADIUS = 3.3;
+// GLOBE_RADIUS definido arriba (3.3)
 const GLOBE_SEGMENTS = 160;
 
 // Lienzos de Textura Difusa 4K + Bump de Bisel Acolchado + Campo de Elevación Suavizado
@@ -993,53 +1017,76 @@ const continentLetterColliders = [];
 const letterRaycaster = new THREE.Raycaster();
 const letterRayMouse = new THREE.Vector2();
 
-// Paletas armónicas de alto contraste por continente (degradado saturado + doble borde nítido)
+// Utilidades de interpolación suave de color para degradados continuos
+function hexToRgb(hex) {
+  const clean = hex.replace('#', '');
+  const num = parseInt(clean, 16);
+  return [(num >> 16) & 255, (num >> 8) & 255, num & 255];
+}
+
+function rgbToHex(r, g, b) {
+  const toHex = (c) => Math.round(Math.min(255, Math.max(0, c))).toString(16).padStart(2, '0');
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
+function interpolateGradient(hexStops, t) {
+  if (!hexStops || hexStops.length === 0) return '#FFFFFF';
+  if (hexStops.length === 1) return hexStops[0];
+  const clampedT = Math.max(0, Math.min(1, t));
+  const numSegments = hexStops.length - 1;
+  const segment = Math.min(Math.floor(clampedT * numSegments), numSegments - 1);
+  const localT = (clampedT - segment / numSegments) * numSegments;
+
+  const rgbA = hexToRgb(hexStops[segment]);
+  const rgbB = hexToRgb(hexStops[segment + 1]);
+
+  const r = rgbA[0] + (rgbB[0] - rgbA[0]) * localT;
+  const g = rgbA[1] + (rgbB[1] - rgbA[1]) * localT;
+  const b = rgbA[2] + (rgbB[2] - rgbA[2]) * localT;
+
+  return rgbToHex(r, g, b);
+}
+
+// Paletas Candy / Toy Pop vibrantes, alegres y juguetonas para letras 3D de continentes
 const CONTINENT_PALETTES = {
-  europa: {
-    top: '#BE185D',     // Rosa frambuesa intenso
-    bottom: '#FB7185',  // Coral cálido
-    contour: '#881337', // Filo oscuro frambuesa
+  norteamerica: {
+    candyStops: ['#FFD166', '#FF6B6B', '#FF4D8D'], // Amarillo sol cálido -> Coral intenso -> Rosa chicle
+    contour: '#701A75', // Filo oscuro contraste
     bevel: '#FFFDF7'    // Bisel blanco crema
   },
-  asia: {
-    top: '#4C1D95',     // Púrpura amatista profundo
-    bottom: '#7C3AED',  // Índigo / Violeta vivo
-    contour: '#2E1065', // Filo oscuro amatista
+  sudamerica: {
+    candyStops: ['#FFD166', '#FF6B6B', '#FF4D8D'], // Amarillo sol cálido -> Coral intenso -> Rosa chicle
+    contour: '#701A75',
+    bevel: '#FFFDF7'
+  },
+  europa: {
+    candyStops: ['#8338EC', '#FF007F', '#FB5607'], // Violeta vibrante -> Fucsia alegre -> Naranja melocotón
+    contour: '#3B0764',
     bevel: '#FFFDF7'
   },
   africa: {
-    top: '#9A3412',     // Naranja terracota / ámbar intenso
-    bottom: '#D97706',  // Ocre tostado vivo
-    contour: '#7C2D12', // Filo oscuro terracota
+    candyStops: ['#F94144', '#F8961E', '#F9C74F'], // Rojo coral vivo -> Naranja mandarina -> Amarillo dorado
+    contour: '#7C2D12',
     bevel: '#FFFDF7'
   },
-  norteamerica: {
-    top: '#14532D',     // Verde bosque profundo
-    bottom: '#16A34A',  // Verde esmeralda intenso
-    contour: '#052E16', // Filo oscuro bosque
-    bevel: '#FFFDF7'
-  },
-  sudamerica: {
-    top: '#064E3B',     // Verde selva profundo
-    bottom: '#0D9488',  // Turquesa / cerceta vivo
-    contour: '#022C22', // Filo oscuro selva
+  asia: {
+    candyStops: ['#00BBF9', '#4361EE', '#F72585'], // Turquesa eléctrico -> Azul cobalto -> Rosa vibrante
+    contour: '#1E1B4B',
     bevel: '#FFFDF7'
   },
   oceania: {
-    top: '#991B1B',     // Terracota / coral tostado intenso
-    bottom: '#EA580C',  // Naranja quemado vivo
-    contour: '#7F1D1D', // Filo oscuro coral
+    candyStops: ['#FF595E', '#FFCA3A', '#6A4C93'], // Coral vivo -> Amarillo intenso -> Morado juguetón
+    contour: '#3B0764',
     bevel: '#FFFDF7'
   },
   polos: {
-    top: '#0369A1',     // Azul glacial intenso
-    bottom: '#0284C7',  // Cian profundo
-    contour: '#082F49', // Filo oscuro azul marino
-    bevel: '#F0F9FF'    // Bisel blanco nieve
+    candyStops: ['#0096C7', '#7209B7'],            // Azul cielo intenso -> Violeta alegre
+    contour: '#082F49',
+    bevel: '#F0F9FF'
   }
 };
 
-function createClayLetterTexture(char, palette) {
+function createClayLetterTexture(char, charColor, palette) {
   const size = 256;
   const canvas = document.createElement('canvas');
   canvas.width = size;
@@ -1053,7 +1100,7 @@ function createClayLetterTexture(char, palette) {
   const cx = size * 0.5;
   const cy = size * 0.5;
 
-  // 1. Sombra suave de contacto
+  // 1. Sombra suave de contacto para dar volumen de plastilina
   ctx.save();
   ctx.shadowColor = 'rgba(8, 22, 48, 0.40)';
   ctx.shadowBlur = 10;
@@ -1063,36 +1110,42 @@ function createClayLetterTexture(char, palette) {
   ctx.fillText(char, cx, cy + 2);
   ctx.restore();
 
-  // 2. Filo exterior oscuro sutil (tono sombra del continente para recortar sobre terreno pastel)
+  // 2. Filo exterior oscuro de alto contraste
   ctx.lineJoin = 'round';
   ctx.lineCap = 'round';
-  ctx.lineWidth = 15;
+  ctx.lineWidth = 14;
   ctx.strokeStyle = palette.contour;
   ctx.strokeText(char, cx, cy + 1);
 
-  // 3. Bisel exterior de plastilina en blanco crema (manteniendo huecos internos bien abiertos)
+  // 3. Bisel exterior de plastilina en blanco crema
   ctx.lineWidth = 8;
   ctx.strokeStyle = palette.bevel;
   ctx.strokeText(char, cx, cy);
 
-  // 4. Cara frontal con degradado saturado, vivo y armónico con el territorio
+  // 4. Cara frontal con color vivo Candy Pop + sutil degradado vertical de volumen 3D
+  const rgb = hexToRgb(charColor);
+  const topColor = rgbToHex(
+    Math.min(255, rgb[0] + 32),
+    Math.min(255, rgb[1] + 32),
+    Math.min(255, rgb[2] + 32)
+  );
   const grad = ctx.createLinearGradient(0, cy - 50, 0, cy + 50);
-  grad.addColorStop(0.0, palette.top);
-  grad.addColorStop(1.0, palette.bottom);
+  grad.addColorStop(0.0, topColor);
+  grad.addColorStop(1.0, charColor);
 
   ctx.fillStyle = grad;
   ctx.fillText(char, cx, cy);
 
-  // 5. Perfilado interior sutil para que los huecos ("o", "a", "p", "e", "d") no se empasten
+  // 5. Perfilado interior sutil para que los huecos no se empasten
   ctx.lineWidth = 2.0;
   ctx.strokeStyle = palette.contour;
-  ctx.globalAlpha = 0.5;
+  ctx.globalAlpha = 0.45;
   ctx.strokeText(char, cx, cy);
   ctx.globalAlpha = 1.0;
 
   // 6. Brillo biselado superior-izquierdo de juguete soft-touch
   ctx.save();
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.70)';
   ctx.fillText(char, cx - 1.5, cy - 2.5);
   ctx.restore();
 
@@ -1190,8 +1243,15 @@ CONTINENT_WORDS_DATA.forEach((wordDef) => {
   const totalChars = chars.length;
   const wordSiblings = [];
 
+  const nonSpaceTotal = chars.filter((c) => c !== ' ').length;
+  let nonSpaceIdx = 0;
+
   chars.forEach((char, idx) => {
     if (char === ' ') return; // Espacio entre palabras sin malla
+
+    const t = nonSpaceTotal > 1 ? nonSpaceIdx / (nonSpaceTotal - 1) : 0.5;
+    const charColor = interpolateGradient(palette.candyStops, t);
+    nonSpaceIdx++;
 
     const letterGroup = new THREE.Group();
     continentLettersRootGroup.add(letterGroup);
@@ -1227,15 +1287,18 @@ CONTINENT_WORDS_DATA.forEach((wordDef) => {
     const rotMatrix = new THREE.Matrix4().makeBasis(right, up, normal);
     letterGroup.quaternion.setFromRotationMatrix(rotMatrix);
 
-    // Malla física 3D de la letra con cara frontal y bisel en materiales definidos
-    const { tex } = createClayLetterTexture(char, palette);
+    // Malla física 3D con colores vivos Candy Pop y auto-emisión para preservar saturación
+    const { tex } = createClayLetterTexture(char, charColor, palette);
     const curvedGeom = createCurvedLetterGeometry(0.28, 0.28);
 
     const letterMat = new THREE.MeshStandardMaterial({
       map: tex,
       transparent: true,
-      roughness: 0.72,
+      roughness: 0.55,
       metalness: 0.04,
+      emissive: new THREE.Color(charColor),
+      emissiveIntensity: 0.25,
+      emissiveMap: tex,
       side: THREE.DoubleSide,
       depthWrite: false
     });
@@ -1252,6 +1315,7 @@ CONTINENT_WORDS_DATA.forEach((wordDef) => {
 
     const letterEntry = {
       char,
+      charColor,
       palette,
       group: letterGroup,
       mesh: letterMesh,
@@ -1279,6 +1343,10 @@ function triggerJellyBounce(letterEntry) {
   letterEntry.lastTrigger = now;
   letterEntry.isBouncing = true;
 
+  if (letterEntry.mesh && letterEntry.mesh.material) {
+    letterEntry.mesh.material.emissiveIntensity = 0.45;
+  }
+
   // Impulso inicial elástico: se ensancha en X, se comprime en Y y salta en Z
   letterEntry.velX = 4.2;
   letterEntry.velY = -4.8;
@@ -1292,6 +1360,9 @@ function triggerJellyBounce(letterEntry) {
       const delay = dist * 42;
       setTimeout(() => {
         sib.isBouncing = true;
+        if (sib.mesh && sib.mesh.material) {
+          sib.mesh.material.emissiveIntensity = 0.40;
+        }
         const decay = 1 / (1 + dist * 0.45);
         sib.velX = 2.4 * decay;
         sib.velY = -2.8 * decay;
@@ -1320,8 +1391,9 @@ renderer.domElement.addEventListener('pointermove', (e) => {
 if (document.fonts) {
   document.fonts.ready.then(() => {
     continentLettersList.forEach((entry) => {
-      const { tex } = createClayLetterTexture(entry.char, entry.palette);
+      const { tex } = createClayLetterTexture(entry.char, entry.charColor, entry.palette);
       entry.mesh.material.map = tex;
+      entry.mesh.material.emissiveMap = tex;
       entry.mesh.material.needsUpdate = true;
     });
   });
@@ -1913,6 +1985,7 @@ function enterHabitatMode(habitat) {
   document.getElementById('configurator-panel').classList.add('active');
   document.getElementById('btn-back-globe').style.display = 'inline-flex';
   document.getElementById('btn-toggle-slots').style.display = 'inline-flex';
+  document.getElementById('btn-stage-add-pack').style.display = 'inline-flex';
   document.getElementById('globe-hint').style.opacity = '0';
 
   globeHotspots.forEach((h) => { h.el.style.display = 'none'; });
@@ -1947,10 +2020,12 @@ function returnToGlobeMode() {
     frameEl.style.background = 'linear-gradient(180deg, #7DD3FC 0%, #BAE6FD 48%, #E0F2FE 78%, #FEF9C3 100%)';
   }
   document.getElementById('stage-mode-icon').textContent = '🌍';
-  document.getElementById('stage-mode-text').textContent = 'Modo Globo Terráqueo Infantil · 6 Biomas Activos';
+  document.getElementById('stage-mode-text').textContent = 'Explora la Tierra · Descubre sus Hábitats y MiniFauna 3D';
   document.getElementById('configurator-panel').classList.remove('active');
+  document.getElementById('configurator-panel').classList.remove('expanded');
   document.getElementById('btn-back-globe').style.display = 'none';
   document.getElementById('btn-toggle-slots').style.display = 'none';
+  document.getElementById('btn-stage-add-pack').style.display = 'none';
   document.getElementById('globe-hint').style.opacity = '1';
 
   currentSlots.forEach((s) => { if (s.markerEl) s.markerEl.style.display = 'none'; });
@@ -1959,7 +2034,9 @@ function returnToGlobeMode() {
   dioramaGroup.visible = false;
   globeGroup.visible = true;
 
-  animateCameraTo(new THREE.Vector3(0, 2.1, 10.2), new THREE.Vector3(0, 0, 0), 650);
+  const idealDist = getIdealGlobeCameraDistance();
+  const ratio = idealDist / 10.2;
+  animateCameraTo(new THREE.Vector3(0, 2.1 * ratio, idealDist), new THREE.Vector3(0, 0, 0), 650);
 }
 
 function findTargetSlotIndex() {
@@ -2036,8 +2113,17 @@ function clearAllPlacedItems() {
 function selectPlacedItem(entry) {
   selectedEntry = entry;
   const toolbar = document.getElementById('selection-toolbar');
-  document.getElementById('sel-item-name').textContent = `${entry.item.emoji} ${entry.item.name} (Punto ${entry.slotIndex + 1})`;
+  const slotText = IS_ADMIN_MODE ? ` (Punto ${entry.slotIndex + 1})` : '';
+  document.getElementById('sel-item-name').textContent = `${entry.item.emoji} ${entry.item.name}${slotText}`;
   toolbar.classList.add('visible');
+
+  // En móvil (<768px), contraer el Bottom Sheet al seleccionar una pieza para despejar el visor
+  if (window.innerWidth <= 768) {
+    const panel = document.getElementById('configurator-panel');
+    if (panel) panel.classList.remove('expanded');
+    const textSpan = document.querySelector('#btn-toggle-sheet .sheet-toggle-text');
+    if (textSpan) textSpan.textContent = 'Opciones de Terreno y Bioma ▲';
+  }
 }
 
 function deselectPlacedItem() {
@@ -2293,11 +2379,26 @@ document.getElementById('cam-zoom-out').addEventListener('click', () => {
 });
 document.getElementById('cam-reset').addEventListener('click', () => {
   if (currentMode === 'GLOBE') {
-    animateCameraTo(new THREE.Vector3(0, 2.1, 10.2), new THREE.Vector3(0, 0, 0), 500);
+    const idealDist = getIdealGlobeCameraDistance();
+    const ratio = idealDist / 10.2;
+    animateCameraTo(new THREE.Vector3(0, 2.1 * ratio, idealDist), new THREE.Vector3(0, 0, 0), 500);
   } else {
     animateCameraTo(new THREE.Vector3(0, 4.3, 7.2), new THREE.Vector3(0, 0.8, 0), 500);
   }
 });
+
+// Tirador toggle del Bottom Sheet para dispositivos móviles (<768px)
+const sheetToggleBtn = document.getElementById('btn-toggle-sheet');
+if (sheetToggleBtn) {
+  sheetToggleBtn.addEventListener('click', () => {
+    const panel = document.getElementById('configurator-panel');
+    const isExpanded = panel.classList.toggle('expanded');
+    const textSpan = sheetToggleBtn.querySelector('.sheet-toggle-text');
+    if (textSpan) {
+      textSpan.textContent = isExpanded ? 'Ocultar Opciones ▼' : 'Opciones de Terreno y Bioma ▲';
+    }
+  });
+}
 document.getElementById('cam-autorotate').addEventListener('click', (e) => {
   controls.autoRotate = !controls.autoRotate;
   e.currentTarget.classList.toggle('active-toggle', controls.autoRotate);
@@ -2797,6 +2898,11 @@ function animate(now) {
     const damping = 14;
 
     continentLettersList.forEach((l) => {
+      // Decaimiento suave del destello de emisión tras micro-interacción de rebote
+      if (l.mesh && l.mesh.material && l.mesh.material.emissiveIntensity > 0.25) {
+        l.mesh.material.emissiveIntensity = Math.max(0.25, l.mesh.material.emissiveIntensity - 0.35 * dt);
+      }
+
       if (!l.isBouncing && l.velX === 0 && l.velY === 0 && l.velZ === 0) return;
 
       const fx = -springK * (l.scale.x - 1.0) - damping * l.velX;
@@ -2867,6 +2973,14 @@ window.addEventListener('resize', () => {
   camera.aspect = w / h;
   camera.updateProjectionMatrix();
   renderer.setSize(w, h);
+
+  // Reencuadre adaptativo si la pantalla cambia de orientación (móvil vertical / apaisado)
+  if (currentMode === 'GLOBE' && !cameraAnim) {
+    const targetDist = getIdealGlobeCameraDistance();
+    const ratio = targetDist / 10.2;
+    camera.position.set(0, 2.1 * ratio, targetDist);
+    controls.update();
+  }
 });
 
 renderMiniCatalog();
