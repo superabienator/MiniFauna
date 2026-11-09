@@ -294,79 +294,57 @@
       50% { transform: translateY(-6px); }
     }
 
-    /* Fila Showcase del Hero: Carruseles de Vídeo Toon flanqueando el Logotipo */
+    /* Fila Showcase del Hero: Vídeos Toon Limpios flanqueando el Logotipo */
     .hero-stage-showcase {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 36px;
+      gap: 20px;
       width: 100%;
       max-width: 1260px;
       margin: 4px 0 10px;
       position: relative;
     }
 
-    .hero-video-card {
-      width: 250px;
-      background: #FFFFFF;
-      padding: 8px 8px 10px;
-      border-radius: 28px 22px 30px 24px / 24px 30px 22px 28px;
-      border: 4.5px solid #FFFFFF;
-      box-shadow: 0 16px 32px -4px rgba(26, 102, 95, 0.16), 0 5px 0 var(--mf-border), inset 0 2px 4px rgba(255, 255, 255, 0.95);
-      position: relative;
-      cursor: pointer;
-      user-select: none;
-      transition: all 0.38s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
-
-    .hero-video-card.tilt-left {
-      transform: rotate(-3.5deg) translateY(2px);
-    }
-
-    .hero-video-card.tilt-right {
-      transform: rotate(3.5deg) translateY(2px);
-    }
-
-    .hero-video-card:hover {
-      box-shadow: 0 22px 44px -4px rgba(26, 102, 95, 0.24), 0 6px 0 var(--mf-border);
-    }
-
-    .hero-video-card.tilt-left:hover {
-      transform: rotate(-1deg) translateY(-6px) scale(1.035);
-    }
-
-    .hero-video-card.tilt-right:hover {
-      transform: rotate(1deg) translateY(-6px) scale(1.035);
-    }
-
-    .video-clay-pin {
-      display: inline-flex;
+    .clean-video-carousel {
+      display: flex;
       align-items: center;
-      gap: 5px;
-      background: var(--mf-lime-soft);
-      color: var(--mf-vine-dark);
-      font-size: 0.68rem;
-      font-weight: 800;
-      padding: 3px 11px;
-      border-radius: 999px;
-      margin: -17px auto 6px;
-      box-shadow: 0 3px 8px rgba(36, 62, 30, 0.12), 0 1px 0 #ffffff inset;
-      border: 1.5px solid #ffffff;
-      z-index: 2;
+      gap: 8px;
       position: relative;
+      transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
-    .video-frame-inner {
-      width: 100%;
+    .clean-video-carousel.tilt-left {
+      transform: rotate(-3.5deg);
+    }
+
+    .clean-video-carousel.tilt-right {
+      transform: rotate(3.5deg);
+    }
+
+    .clean-video-carousel.tilt-left:hover {
+      transform: rotate(-1deg) translateY(-4px) scale(1.025);
+    }
+
+    .clean-video-carousel.tilt-right:hover {
+      transform: rotate(1deg) translateY(-4px) scale(1.025);
+    }
+
+    .clean-video-wrap {
+      width: 240px;
       height: 150px;
-      border-radius: 20px 16px 22px 18px / 18px 22px 16px 20px;
+      border-radius: 24px 18px 26px 20px / 20px 26px 18px 24px;
       overflow: hidden;
       position: relative;
-      background: linear-gradient(135deg, #7DD3FC 0%, #BAE6FD 100%);
-      box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.18);
+      border: 3px solid rgba(255, 255, 255, 0.95);
+      box-shadow:
+        0 14px 28px -4px rgba(26, 102, 95, 0.18),
+        0 0 0 1.5px rgba(40, 150, 140, 0.20),
+        inset 0 1px 2px rgba(255, 255, 255, 0.7);
+      background: #E0F2FE;
     }
 
-    .hero-video-player {
+    .clean-video-wrap .hero-video-player {
       width: 100%;
       height: 100%;
       object-fit: cover;
@@ -374,86 +352,36 @@
       border-radius: inherit;
     }
 
-    .video-overlay-badge {
-      position: absolute;
-      bottom: 7px;
-      right: 7px;
-      background: rgba(18, 38, 32, 0.68);
-      backdrop-filter: blur(6px);
-      color: #FFFFFF;
-      font-size: 0.60rem;
-      font-weight: 800;
-      padding: 2px 8px;
-      border-radius: 999px;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      pointer-events: none;
-    }
-
-    .badge-dot {
-      width: 6px;
-      height: 6px;
-      background: var(--mf-lime);
-      border-radius: 50%;
-      display: inline-block;
-      box-shadow: 0 0 6px var(--mf-lime);
-      animation: pulseDot 2s infinite;
-    }
-
-    @keyframes pulseDot {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.4; transform: scale(1.35); }
-    }
-
-    .video-carousel-footer {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 6px 4px 1px;
-    }
-
-    .v-nav-btn {
-      background: var(--mf-bg-tint);
-      border: 1.5px solid var(--mf-border);
+    .v-side-btn {
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(8px);
       color: var(--mf-vine-dark);
-      width: 24px;
-      height: 24px;
+      border: 1.5px solid var(--mf-border);
+      width: 28px;
+      height: 28px;
       border-radius: 50%;
       display: grid;
       place-items: center;
-      font-size: 0.85rem;
-      font-weight: 900;
+      font-size: 1.05rem;
+      font-weight: 800;
       cursor: pointer;
-      transition: all 0.18s;
+      box-shadow: 0 4px 12px rgba(36, 62, 30, 0.10);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      padding: 0;
       line-height: 1;
+      flex-shrink: 0;
     }
 
-    .v-nav-btn:hover {
+    .v-side-btn:hover {
       background: var(--mf-lagoon);
-      color: white;
+      color: #ffffff;
       border-color: var(--mf-lagoon-dark);
-      transform: scale(1.1);
+      transform: scale(1.14);
+      box-shadow: 0 6px 16px rgba(40, 150, 140, 0.32);
     }
 
-    .v-dots {
-      display: flex;
-      gap: 5px;
-      align-items: center;
-    }
-
-    .v-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 999px;
-      background: var(--mf-border);
-      transition: all 0.22s;
-      cursor: pointer;
-    }
-
-    .v-dot.active {
-      width: 16px;
-      background: var(--mf-lagoon);
+    .v-side-btn:active {
+      transform: scale(0.94);
     }
 
     .hero-subtitle {
@@ -1198,9 +1126,9 @@
 
     @media (max-width: 1024px) {
       .products-grid { grid-template-columns: repeat(3, 1fr); }
-      .hero-stage-showcase { gap: 16px; }
-      .hero-video-card { width: 195px; }
-      .video-frame-inner { height: 120px; }
+      .hero-stage-showcase { gap: 10px; }
+      .clean-video-wrap { width: 190px; height: 120px; }
+      .v-side-btn { width: 24px; height: 24px; font-size: 0.9rem; }
       .hero-logo-img { width: 340px; }
     }
 
@@ -1208,35 +1136,32 @@
       .hero-stage-showcase {
         flex-wrap: wrap;
         gap: 12px;
+        justify-content: center;
       }
       .minifauna-logo-stage {
         order: 1;
         width: 100%;
       }
-      .hero-video-card {
+      .clean-video-carousel {
         order: 2;
-        width: calc(50% - 10px);
-        max-width: 175px;
-        padding: 6px 6px 8px;
+        gap: 6px;
       }
-      .hero-video-card.tilt-left {
+      .clean-video-wrap {
+        width: 145px;
+        height: 95px;
+        border-radius: 18px 14px 18px 14px;
+        border-width: 2.5px;
+      }
+      .clean-video-carousel.tilt-left {
         transform: rotate(-2.5deg);
       }
-      .hero-video-card.tilt-right {
+      .clean-video-carousel.tilt-right {
         transform: rotate(2.5deg);
       }
-      .video-frame-inner {
-        height: 105px;
-      }
-      .video-clay-pin {
-        font-size: 0.60rem;
-        padding: 2px 8px;
-        margin: -14px auto 4px;
-      }
-      .v-nav-btn {
-        width: 20px;
-        height: 20px;
-        font-size: 0.72rem;
+      .v-side-btn {
+        width: 22px;
+        height: 22px;
+        font-size: 0.82rem;
       }
       .hero-logo-img {
         width: 320px;
@@ -1922,13 +1847,10 @@
     </div>
 
     <div class="hero-stage-showcase">
-      <!-- Carrusel de Vídeos Izquierdo (Toon / Cartoon Clay Frame - Inclinado a la izquierda) -->
-      <div class="hero-video-card tilt-left" data-carousel-id="hero-video-left" title="MiniFauna en Acción · Clip 1">
-        <div class="video-clay-pin">
-          <span>🦆</span>
-          <span>MiniFauna en Vivo</span>
-        </div>
-        <div class="video-frame-inner">
+      <!-- Carrusel de Vídeos Izquierdo (Limpio con reborde integrado e indicadores laterales) -->
+      <div class="clean-video-carousel tilt-left" data-carousel-id="hero-video-left">
+        <button class="v-side-btn prev" title="Vídeo anterior" aria-label="Vídeo anterior">‹</button>
+        <div class="clean-video-wrap">
           <video class="hero-video-player"
                  src="/videos/ducklings.mp4"
                  autoplay
@@ -1937,19 +1859,8 @@
                  playsinline
                  preload="metadata"
                  aria-label="Vídeo de patitos nadando en estanque natural"></video>
-          <div class="video-overlay-badge">
-            <span class="badge-dot"></span> 1080p Clip
-          </div>
         </div>
-        <div class="video-carousel-footer">
-          <button class="v-nav-btn prev" title="Anterior clip" aria-label="Anterior clip">‹</button>
-          <div class="v-dots">
-            <span class="v-dot active" title="Clip 1: Patitos en el estanque"></span>
-            <span class="v-dot" title="Clip 2: Próximamente"></span>
-            <span class="v-dot" title="Clip 3: Próximamente"></span>
-          </div>
-          <button class="v-nav-btn next" title="Siguiente clip" aria-label="Siguiente clip">›</button>
-        </div>
+        <button class="v-side-btn next" title="Vídeo siguiente" aria-label="Vídeo siguiente">›</button>
       </div>
 
       <!-- Logotipo Oficial Botánico 3D Central -->
@@ -1957,13 +1868,10 @@
         <img src="/logo-minifauna.png" alt="MiniFauna — Logotipo Botánico 3D" class="hero-logo-img" />
       </div>
 
-      <!-- Carrusel de Vídeos Derecho (Toon / Cartoon Clay Frame - Inclinado a la derecha) -->
-      <div class="hero-video-card tilt-right" data-carousel-id="hero-video-right" title="Hábitats Reales · Clip 1">
-        <div class="video-clay-pin">
-          <span>🐾</span>
-          <span>Hábitats Reales</span>
-        </div>
-        <div class="video-frame-inner">
+      <!-- Carrusel de Vídeos Derecho (Limpio con reborde integrado e indicadores laterales) -->
+      <div class="clean-video-carousel tilt-right" data-carousel-id="hero-video-right">
+        <button class="v-side-btn prev" title="Vídeo anterior" aria-label="Vídeo anterior">‹</button>
+        <div class="clean-video-wrap">
           <video class="hero-video-player"
                  src="/videos/ducklings.mp4"
                  autoplay
@@ -1972,19 +1880,8 @@
                  playsinline
                  preload="metadata"
                  aria-label="Vídeo de patitos nadando en estanque natural"></video>
-          <div class="video-overlay-badge">
-            <span class="badge-dot"></span> 1080p Clip
-          </div>
         </div>
-        <div class="video-carousel-footer">
-          <button class="v-nav-btn prev" title="Anterior clip" aria-label="Anterior clip">‹</button>
-          <div class="v-dots">
-            <span class="v-dot active" title="Clip 1: Patitos en el estanque"></span>
-            <span class="v-dot" title="Clip 2: Próximamente"></span>
-            <span class="v-dot" title="Clip 3: Próximamente"></span>
-          </div>
-          <button class="v-nav-btn next" title="Siguiente clip" aria-label="Siguiente clip">›</button>
-        </div>
+        <button class="v-side-btn next" title="Vídeo siguiente" aria-label="Vídeo siguiente">›</button>
       </div>
     </div>
 
@@ -2430,6 +2327,6 @@
 
   <div id="woo-toast" class="toast"></div>
 
-  <script type="module" src="./app.js?v=videos1"></script>
+  <script type="module" src="./app.js?v=cleanvideo1"></script>
 </body>
 </html>

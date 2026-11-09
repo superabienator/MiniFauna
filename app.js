@@ -2985,27 +2985,17 @@ if ('IntersectionObserver' in window && heroVideos.length > 0) {
   heroVideos.forEach((v) => videoObserver.observe(v));
 }
 
-// Navegación interactiva de clips en carrusel
-document.querySelectorAll('.hero-video-card').forEach((card) => {
-  const dots = card.querySelectorAll('.v-dot');
-  const prevBtn = card.querySelector('.v-nav-btn.prev');
-  const nextBtn = card.querySelector('.v-nav-btn.next');
+// Navegación interactiva de clips en carruseles laterales
+document.querySelectorAll('.clean-video-carousel').forEach((carousel) => {
+  const prevBtn = carousel.querySelector('.v-side-btn.prev');
+  const nextBtn = carousel.querySelector('.v-side-btn.next');
 
   const onNavClick = () => {
-    showToast('🦆 Clip 1/1: Patitos en el estanque · ¡Pronto añadiremos más vídeos de animales y hábitats!');
+    showToast('🦆 Clip 1/1: Patitos en el estanque · ¡Pronto añadiremos más vídeos y hábitats!');
   };
 
   if (prevBtn) prevBtn.addEventListener('click', (e) => { e.stopPropagation(); onNavClick(); });
   if (nextBtn) nextBtn.addEventListener('click', (e) => { e.stopPropagation(); onNavClick(); });
-
-  dots.forEach((dot, idx) => {
-    dot.addEventListener('click', (e) => {
-      e.stopPropagation();
-      dots.forEach((d) => d.classList.remove('active'));
-      dot.classList.add('active');
-      showToast(`🎬 Mostrando clip ${idx + 1} del hábitat.`);
-    });
-  });
 });
 
 requestAnimationFrame(animate);
