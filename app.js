@@ -2929,36 +2929,113 @@ function showToast(htmlMsg) {
 // 8.5. EVOLUCIÓN BENCHMARK MINIFAUNA: COMPONENTES, PACKS, MODALES Y GAMIFICACIÓN
 // ============================================================================
 
-// --- 1. NAVEGACIÓN ACTIVA & SCROLL-SPY ---
+// --- 1. NAVEGACIÓN ACTIVA, SCROLL-SPY Y CAMBIO DINÁMICO DE COLOR ---
 function initNavScrollSpy() {
+  const navbar = document.getElementById('main-navbar') || document.querySelector('.navbar');
+  const progressFill = document.getElementById('nav-progress-fill');
+  const navList = document.getElementById('main-nav-links');
+
   const sections = [
-    { id: 'explorador-3d', link: document.querySelector('.nav-links a[href="#explorador-3d"]') },
-    { id: 'catalogo-tienda', link: document.querySelector('.nav-links a[href="#catalogo-tienda"]') },
-    { id: 'packs-seccion', link: document.querySelector('.nav-links a[href="#packs-seccion"]') },
-    { id: 'regalos-seccion', link: document.querySelector('.nav-links a[href="#regalos-seccion"]') },
-    { id: 'profesionales-seccion', link: document.querySelector('.nav-links a[href="#profesionales-seccion"]') },
-    { id: 'universo-seccion', link: document.querySelector('.nav-links a[href="#universo-seccion"]') },
-    { id: 'preguntas-frecuentes', link: document.querySelector('.nav-links a[href="#preguntas-frecuentes"]') }
+    { id: 'explorador-3d', theme: 'globe', link: document.querySelector('.nav-links a[href="#explorador-3d"]') },
+    { id: 'catalogo-tienda', theme: 'catalog', link: document.querySelector('.nav-links a[href="#catalogo-tienda"]') },
+    { id: 'packs-seccion', theme: 'packs', link: document.querySelector('.nav-links a[href="#packs-seccion"]') },
+    { id: 'regalos-seccion', theme: 'gifts', link: document.querySelector('.nav-links a[href="#regalos-seccion"]') },
+    { id: 'profesionales-seccion', theme: 'pro', link: document.querySelector('.nav-links a[href="#profesionales-seccion"]') },
+    { id: 'universo-seccion', theme: 'universe', link: document.querySelector('.nav-links a[href="#universo-seccion"]') },
+    { id: 'preguntas-frecuentes', theme: 'faq', link: document.querySelector('.nav-links a[href="#preguntas-frecuentes"]') }
   ];
 
-  if ('IntersectionObserver' in window) {
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          const match = sections.find((s) => s.id === entry.target.id);
-          if (match && match.link) {
-            document.querySelectorAll('.nav-links a').forEach((a) => a.classList.remove('active'));
-            match.link.classList.add('active');
-          }
-        }
-      });
-    }, { rootMargin: '-20% 0px -65% 0px' });
+  let isTicking = false;
+  let lastTheme = null;
+  let lastActiveLink = null;
 
-    sections.forEach((s) => {
+  function updateNavbarThemeOnScroll() {
+    const scrollY = window.scrollY || window.pageYOffset || 0;
+    const docHeight = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+    const scrollPct = Math.min(100, Math.max(0, (scrollY / docHeight) * 100));
+
+    // Estado compacto persistente con sombra elevada
+    if (navbar) {
+      navbar.classList.toggle('is-scrolled', scrollY > 20);
+      navbar.style.setProperty('--nav-progress-pct', `${scrollPct.toFixed(1)}%`);
+    }
+    if (progressFill) {
+      progressFill.style.width = `${scrollPct.toFixed(1)}%`;
+    }
+
+    // Punto de comprobación dinámico en el tercio superior de la pantalla
+    const checkPoint = scrollY + window.innerHeight * 0.35;
+    let targetTheme = 'globe';
+    let targetLink = sections[0].link;
+
+    for (let i = sections.length - 1; i >= 0; i--) {
+      const s = sections[i];
       const el = document.getElementById(s.id);
-      if (el) observer.observe(el);
-    });
+      if (el) {
+        const top = el.offsetTop - 85;
+        if (checkPoint >= top) {
+          targetTheme = s.theme;
+          targetLink = s.link;
+          break;
+        }
+      }
+    }
+
+    // Actualizar tema de color dinámico en navbar si cambió
+    if (navbar && lastTheme !== targetTheme) {
+      navbar.setAttribute('data-nav-theme', targetTheme);
+      lastTheme = targetTheme;
+    }
+
+    // Actualizar pestaña activa en la barra
+    if (targetLink && lastActiveLink !== targetLink) {
+      document.querySelectorAll('.nav-links a').forEach((a) => a.classList.remove('active'));
+      targetLink.classList.add('active');
+      lastActiveLink = targetLink;
+
+      // En pantallas táctiles con scroll horizontal en los enlaces, centrar la pastilla activa
+      if (navList && window.innerWidth <= 960) {
+        targetLink.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      }
+    }
+
+    isTicking = false;
   }
+
+  window.addEventListener('scroll', () => {
+    if (!isTicking) {
+      requestAnimationFrame(updateNavbarThemeOnScroll);
+      isTicking = true;
+    }
+  }, { passive: true });
+
+  // Scroll suave e interactivo con cambio instantáneo de color al hacer clic
+  document.querySelectorAll('.nav-links a, .nav-brand').forEach((anchor) => {
+    anchor.addEventListener('click', (e) => {
+      const href = anchor.getAttribute('href');
+      if (href && href.startsWith('#')) {
+        const targetEl = document.querySelector(href);
+        if (targetEl) {
+          e.preventDefault();
+          const match = sections.find((s) => s.link === anchor || s.id === href.substring(1));
+          const newTheme = match ? match.theme : 'globe';
+          if (navbar) {
+            navbar.setAttribute('data-nav-theme', newTheme);
+            lastTheme = newTheme;
+          }
+          if (anchor.classList.contains('nav-link')) {
+            document.querySelectorAll('.nav-links a').forEach((a) => a.classList.remove('active'));
+            anchor.classList.add('active');
+            lastActiveLink = anchor;
+          }
+          targetEl.scrollIntoView({ behavior: 'smooth' });
+        }
+      }
+    });
+  });
+
+  // Ejecución inicial para fijar el color de carga
+  updateNavbarThemeOnScroll();
 }
 
 // --- 2. MODO 2D ACCESIBLE EN EL EXPLORADOR ---
