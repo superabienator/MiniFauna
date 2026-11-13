@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://minifauna.martenscrap.com/sitemap.xml

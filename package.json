@@ -3,8 +3,12 @@
   "version": "1.0.0",
   "private": true,
   "description": "MiniFauna — Explorador 3D Art-Toy de Hábitats, Figuras Articuladas y Tienda Oficial WooCommerce",
+  "type": "module",
   "scripts": {
-    "start": "npx serve ."
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "start": "vite"
   },
   "keywords": [
     "threejs",
@@ -14,5 +18,9 @@
     "art-toy"
   ],
   "author": "Marta Pastor Escribano <hola@martenscrap.com>",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "three": "^0.170.0",
+    "vite": "^8.3.8"
+  }
 }

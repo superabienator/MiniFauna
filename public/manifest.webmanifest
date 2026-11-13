@@ -1,0 +1,22 @@
+{
+  "name": "MiniFauna — Explorador 3D de Hábitats & Tienda Oficial",
+  "short_name": "MiniFauna",
+  "description": "Explora el globo terráqueo interactivo 3D, personaliza tu hábitat con figuras articuladas y descubre la colección oficial de Martenscrap.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F6FBF7",
+  "theme_color": "#28968C",
+  "lang": "es",
+  "icons": [
+    {
+      "src": "/favicon-minifauna.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo-minifauna.png",
+      "sizes": "1024x571",
+      "type": "image/png"
+    }
+  ]
+}
