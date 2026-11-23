@@ -285,6 +285,27 @@
       <div id="canvas-container"></div>
       <div id="hotspot-layer"></div>
 
+      <!-- Preloader espacial de 2 etapas (no bloquea el DOM comercial) -->
+      <div id="explorer-preloader" class="explorer-preloader" aria-live="polite">
+        <div class="preloader-card">
+          <div class="preloader-label">MINIFAUNA SPATIAL ENGINE · CARGANDO GLOBO 3D</div>
+          <div class="preloader-bar-track">
+            <div id="preloader-bar-fill" class="preloader-bar-fill"></div>
+          </div>
+          <div id="preloader-pct" class="preloader-pct">25%</div>
+        </div>
+      </div>
+
+      <!-- Retículas y HUD de Telemetría en Vivo (estilo expedición espacial) -->
+      <div class="hud-corner tl" aria-hidden="true"></div>
+      <div class="hud-corner tr" aria-hidden="true"></div>
+      <div class="hud-corner bl" aria-hidden="true"></div>
+      <div class="hud-corner br" aria-hidden="true"></div>
+      <div id="explorer-hud" class="explorer-hud" aria-hidden="true">
+        <span class="hud-dot"></span>
+        <span id="hud-coords">LAT 18.0°N · LON 00.0°E</span>
+      </div>
+
       <!-- Vista alternativa accesible 2D para dispositivos modestos o navegación directa -->
       <div id="fallback-2d-view" class="fallback-2d-view" style="display:none;" aria-label="Listado accesible de biomas y hábitats">
         <div class="fallback-2d-header">
@@ -348,6 +369,7 @@
         <button id="cam-zoom-out" class="cam-btn" title="Alejar Zoom">➖</button>
         <button id="cam-reset" class="cam-btn" title="Centrar Cámara">🎯</button>
         <button id="cam-autorotate" class="cam-btn active-toggle" title="Giro Automático">🔄</button>
+        <button id="btn-toggle-sound" class="cam-btn" title="Activar o silenciar micro-audio" aria-label="Activar o silenciar sonido">🔇</button>
       </div>
 
       <div id="globe-hint" class="globe-hint">
@@ -1241,6 +1263,6 @@
 
   <div id="woo-toast" class="toast"></div>
 
-  <script type="module" src="/src/main.js"></script>
+  <script type="module" src="/src/boot.js"></script>
 </body>
 </html>

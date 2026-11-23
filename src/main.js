@@ -1,8 +1,9 @@
-import './styles/main.css';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { escapeHtml, safeJsonParse } from './utils/security.js';
+import { createAtmosphericHalo, createBotanicalMotes } from './effects/spatialEffects.js';
+import { toggleSound, playPop, playChime } from './utils/sound.js';
 import {
   HABITATS,
   CATALOG_FIGURES,
@@ -178,6 +179,26 @@ function updateClayClouds() {
 // ============================================================================
 const globeGroup = new THREE.Group();
 scene.add(globeGroup);
+
+// Efectos Espaciales GLSL (Halo atmosférico + Partículas botánicas en 1 draw call)
+const atmosphericHalo = createAtmosphericHalo(GLOBE_RADIUS);
+globeGroup.add(atmosphericHalo.mesh);
+
+const botanicalMotes = createBotanicalMotes(130);
+scene.add(botanicalMotes.points);
+
+// Estado de puntero y scroll para paralaje y coreografía espacial
+const spatialPointer = { x: 0, y: 0, targetX: 0, targetY: 0 };
+let scrollChoreoRatio = 0;
+
+function updateSpatialScrollChoreo() {
+  const explorerEl = document.getElementById('explorador-3d');
+  if (!explorerEl) return;
+  const maxRange = Math.max(1, explorerEl.offsetTop + explorerEl.offsetHeight * 0.6);
+  scrollChoreoRatio = Math.max(0, Math.min(1, (window.scrollY || 0) / maxRange));
+}
+window.addEventListener('scroll', updateSpatialScrollChoreo, { passive: true });
+updateSpatialScrollChoreo();
 
 // GLOBE_RADIUS definido arriba (3.3) — 128 segmentos dan silueta suave con 36% menos vértices
 const GLOBE_SEGMENTS = 128;
@@ -734,21 +755,45 @@ function renderPolygonsToGlobe(polygons) {
 }
 
 drawToyOceanBase(mapCtx, mapCanvas.width, mapCanvas.height);
-fetch('https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/land-110m.json')
-  .then((res) => res.json())
-  .then((topology) => {
-    // Diferir rasterización pesada tras el primer pintado para que la página sea interactiva al instante
-    const runGlobeRender = () => {
-      const polygons = decodeTopoJsonLandUnwrapped(topology);
-      renderPolygonsToGlobe(polygons);
-    };
-    if ('requestIdleCallback' in window) {
-      window.requestIdleCallback(runGlobeRender, { timeout: 120 });
-    } else {
-      setTimeout(runGlobeRender, 16);
+
+const WORLD_ATLAS_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/land-110m.json';
+
+function finishGlobeCartography(polygons) {
+  const runGlobeRender = () => {
+    renderPolygonsToGlobe(polygons);
+    if (typeof window.__setExplorerProgress === 'function') {
+      window.__setExplorerProgress(100, true);
     }
-  })
-  .catch((err) => console.warn('Cartografía remota no disponible:', err));
+  };
+  if ('requestIdleCallback' in window) {
+    window.requestIdleCallback(runGlobeRender, { timeout: 120 });
+  } else {
+    setTimeout(runGlobeRender, 16);
+  }
+}
+
+if (typeof Worker !== 'undefined') {
+  const globeWorker = new Worker(new URL('./workers/globeWorker.js', import.meta.url), { type: 'module' });
+  globeWorker.addEventListener('message', (e) => {
+    const data = e.data || {};
+    if (data.ok && data.polygons) {
+      finishGlobeCartography(data.polygons);
+    } else {
+      console.warn('Worker cartográfico fallback:', data.error);
+      if (typeof window.__setExplorerProgress === 'function') window.__setExplorerProgress(100, true);
+    }
+    globeWorker.terminate();
+  });
+  globeWorker.postMessage({ url: WORLD_ATLAS_URL });
+} else {
+  fetch(WORLD_ATLAS_URL)
+    .then((res) => res.json())
+    .then((topology) => finishGlobeCartography(decodeTopoJsonLandUnwrapped(topology)))
+    .catch((err) => {
+      console.warn('Cartografía remota no disponible:', err);
+      if (typeof window.__setExplorerProgress === 'function') window.__setExplorerProgress(100, true);
+    });
+}
 
 function latLonToVector3(lat, lon, radius) {
   const phi = (90 - lat) * (Math.PI / 180);
@@ -1095,6 +1140,7 @@ function triggerJellyBounce(letterEntry) {
   if (now - letterEntry.lastTrigger < 260) return;
   letterEntry.lastTrigger = now;
   letterEntry.isBouncing = true;
+  playPop(letterEntry.indexInWord % 5);
 
   if (letterEntry.mesh && letterEntry.mesh.material) {
     letterEntry.mesh.material.emissiveIntensity = 0.45;
@@ -1127,11 +1173,14 @@ function triggerJellyBounce(letterEntry) {
 
 // Detección hover en puntero (SIN cambiar cursor a pointer, manteniendo UX limpia)
 renderer.domElement.addEventListener('pointermove', (e) => {
-  if (currentMode !== 'GLOBE') return;
   const rect = renderer.domElement.getBoundingClientRect();
   letterRayMouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
   letterRayMouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
 
+  spatialPointer.targetX = letterRayMouse.x;
+  spatialPointer.targetY = letterRayMouse.y;
+
+  if (currentMode !== 'GLOBE') return;
   letterRaycaster.setFromCamera(letterRayMouse, camera);
   const hits = letterRaycaster.intersectObjects(continentLetterColliders, false);
   if (hits.length > 0) {
@@ -1696,6 +1745,7 @@ const BIOME_SKY_GRADIENTS = {
 function enterHabitatMode(habitat) {
   currentMode = 'HABITAT';
   activeHabitat = habitat;
+  playChime();
 
   const frameEl = document.querySelector('.explorer-frame');
   if (frameEl && BIOME_SKY_GRADIENTS[habitat.id]) {
@@ -3257,9 +3307,22 @@ const _animNormal = new THREE.Vector3();
 const _animViewVec = new THREE.Vector3();
 const _animProjected = new THREE.Vector3();
 
+const hudCoordsEl = document.getElementById('hud-coords');
+let lastHudUpdate = 0;
+
 function animate(now) {
   requestAnimationFrame(animate);
   if (!isExplorerInViewport) return;
+
+  const tSec = now * 0.001;
+  atmosphericHalo.material.uniforms.uTime.value = tSec;
+  botanicalMotes.material.uniforms.uTime.value = tSec;
+
+  if (!prefersReducedMotion) {
+    spatialPointer.x += (spatialPointer.targetX - spatialPointer.x) * 0.06;
+    spatialPointer.y += (spatialPointer.targetY - spatialPointer.y) * 0.06;
+    botanicalMotes.material.uniforms.uPointer.value.set(spatialPointer.x, spatialPointer.y);
+  }
 
   if (cameraAnim) {
     const t = Math.min((now - cameraAnim.startTime) / cameraAnim.duration, 1);
@@ -3271,11 +3334,32 @@ function animate(now) {
 
   controls.update();
 
+  // --- COREOGRAFÍA SCROLL ↔ ESCENA 3D & PARALAJE DE PUNTERO ---
+  if (currentMode === 'GLOBE' && !prefersReducedMotion) {
+    const targetTiltX = -spatialPointer.y * 0.045 + (scrollChoreoRatio - 0.3) * 0.14;
+    const targetTiltZ = -spatialPointer.x * 0.035;
+    globeGroup.rotation.x += (targetTiltX - globeGroup.rotation.x) * 0.05;
+    globeGroup.rotation.z += (targetTiltZ - globeGroup.rotation.z) * 0.05;
+  } else if (currentMode === 'HABITAT' && !prefersReducedMotion) {
+    dioramaGroup.rotation.x += (-spatialPointer.y * 0.025 - dioramaGroup.rotation.x) * 0.05;
+  }
+
   // --- NUBES DE ALGODÓN DE PLASTILINA (Paralaje GPU 0-WebGL detrás del globo) ---
   updateClayClouds();
 
   const rect = container.getBoundingClientRect();
   camera.getWorldPosition(_animCamPos);
+
+  // --- HUD DE TELEMETRÍA EN VIVO (LAT / LON) ---
+  if (hudCoordsEl && currentMode === 'GLOBE' && now - lastHudUpdate > 120) {
+    lastHudUpdate = now;
+    _animNormal.copy(_animCamPos).normalize();
+    const latDeg = Math.asin(THREE.MathUtils.clamp(_animNormal.y, -1, 1)) * (180 / Math.PI);
+    const lonDeg = Math.atan2(_animNormal.x, _animNormal.z) * (180 / Math.PI);
+    const latStr = `${Math.abs(latDeg).toFixed(1)}°${latDeg >= 0 ? 'N' : 'S'}`;
+    const lonStr = `${Math.abs(lonDeg).toFixed(1)}°${lonDeg >= 0 ? 'E' : 'O'}`;
+    hudCoordsEl.textContent = `LAT ${latStr} · LON ${lonStr}`;
+  }
 
   if (currentMode === 'GLOBE') {
     // Actualización de física elástica "Jelly Bounce" (Squash & Stretch de plastilina en letras 3D)
@@ -3422,3 +3506,14 @@ document.addEventListener('keydown', (e) => {
     el.classList.remove('open');
   });
 });
+
+// Interruptor de micro-audio procedural (silenciado por defecto)
+const soundBtn = document.getElementById('btn-toggle-sound');
+if (soundBtn) {
+  soundBtn.addEventListener('click', () => {
+    const active = toggleSound();
+    soundBtn.textContent = active ? '🔊' : '🔇';
+    soundBtn.classList.toggle('active-toggle', active);
+    showToast(active ? '🔊 Micro-sonido táctil activado' : '🔇 Sonido silenciado');
+  });
+}
